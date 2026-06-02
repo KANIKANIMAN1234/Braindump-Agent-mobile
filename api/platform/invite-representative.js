@@ -34,7 +34,7 @@ module.exports = async function handler(req, res) {
   }
 
   const { data: org, error: orgError } = await supabase
-    .from("organizations")
+    .from("m_organizations")
     .select("id, name, status")
     .eq("id", organization_id)
     .single();
@@ -44,7 +44,7 @@ module.exports = async function handler(req, res) {
   }
 
   const { data: existingAdmin } = await supabase
-    .from("members")
+    .from("m_members")
     .select("id, status, line_user_id")
     .eq("organization_id", organization_id)
     .eq("role", "org_admin")
@@ -61,7 +61,7 @@ module.exports = async function handler(req, res) {
   const repName = String(display_name).trim();
 
   const { data: member, error: memberError } = await supabase
-    .from("members")
+    .from("m_members")
     .insert({
       organization_id,
       role: "org_admin",
@@ -75,7 +75,7 @@ module.exports = async function handler(req, res) {
 
   const code = generateInviteCode();
   const { data: invite, error: inviteError } = await supabase
-    .from("member_invites")
+    .from("t_member_invites")
     .insert({
       member_id: member.id,
       code,

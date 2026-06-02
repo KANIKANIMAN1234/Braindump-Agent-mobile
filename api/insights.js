@@ -14,7 +14,7 @@ module.exports = async function handler(req, res) {
   if (req.method === "GET") {
     const limit = Math.min(parseInt(req.query.limit, 10) || 50, 100);
     let query = supabase
-      .from("insights")
+      .from("t_insights")
       .select("id, content, tags, exported_at, created_at")
       .order("created_at", { ascending: false })
       .limit(limit);
@@ -32,7 +32,7 @@ module.exports = async function handler(req, res) {
       tags: body.tags || null,
     });
     const { data, error } = await supabase
-      .from("insights")
+      .from("t_insights")
       .insert(row)
       .select("id, content, tags, created_at")
       .single();

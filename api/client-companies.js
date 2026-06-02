@@ -21,7 +21,7 @@ module.exports = async function handler(req, res) {
 
   if (req.method === "GET" && !id) {
     let query = supabase
-      .from("client_companies")
+      .from("m_client_companies")
       .select(COMPANY_FIELDS)
       .order("name", { ascending: true });
     query = applyClientCompaniesScope(query, ctx);
@@ -33,7 +33,7 @@ module.exports = async function handler(req, res) {
   }
 
   if (req.method === "GET" && id) {
-    let query = supabase.from("client_companies").select(COMPANY_FIELDS).eq("id", id);
+    let query = supabase.from("m_client_companies").select(COMPANY_FIELDS).eq("id", id);
     query = applyClientCompaniesScope(query, ctx);
     const { data, error } = await query.maybeSingle();
     if (error) return res.status(500).json({ error: error.message });
@@ -62,13 +62,13 @@ module.exports = async function handler(req, res) {
       created_by_member_id: ctx.member.id,
       updated_by_member_id: ctx.member.id,
     };
-    const { data, error } = await supabase.from("client_companies").insert(row).select(COMPANY_FIELDS).single();
+    const { data, error } = await supabase.from("m_client_companies").insert(row).select(COMPANY_FIELDS).single();
     if (error) return res.status(500).json({ error: error.message });
     return res.status(201).json({ company: data });
   }
 
   if (req.method === "PATCH" && id) {
-    let findQ = supabase.from("client_companies").select("id").eq("id", id);
+    let findQ = supabase.from("m_client_companies").select("id").eq("id", id);
     findQ = applyClientCompaniesScope(findQ, ctx);
     const { data: found } = await findQ.maybeSingle();
     if (!found) return res.status(404).json({ error: "採用企業が見つかりません" });
@@ -87,7 +87,7 @@ module.exports = async function handler(req, res) {
     if (update.name === "") return res.status(400).json({ error: "企業名は必須です" });
 
     const { data, error } = await supabase
-      .from("client_companies")
+      .from("m_client_companies")
       .update(update)
       .eq("id", id)
       .select(COMPANY_FIELDS)
@@ -97,11 +97,11 @@ module.exports = async function handler(req, res) {
   }
 
   if (req.method === "DELETE" && id) {
-    let findQ = supabase.from("client_companies").select("id").eq("id", id);
+    let findQ = supabase.from("m_client_companies").select("id").eq("id", id);
     findQ = applyClientCompaniesScope(findQ, ctx);
     const { data: found } = await findQ.maybeSingle();
     if (!found) return res.status(404).json({ error: "採用企業が見つかりません" });
-    const { error } = await supabase.from("client_companies").delete().eq("id", id);
+    const { error } = await supabase.from("m_client_companies").delete().eq("id", id);
     if (error) return res.status(500).json({ error: error.message });
     return res.status(200).json({ success: true });
   }

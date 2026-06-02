@@ -219,7 +219,7 @@ module.exports = async function handler(req, res) {
 
     /* チャット履歴をDBに保存（失敗しても返答は返す） */
     try {
-      await supabase.from("chat_messages").insert([
+      await supabase.from("t_chat_messages").insert([
         scopedRowData(ctx, { role: "user", content: message }),
         scopedRowData(ctx, { role: "bot", content: reply }),
       ]);

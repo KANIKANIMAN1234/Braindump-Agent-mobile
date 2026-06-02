@@ -35,7 +35,7 @@ module.exports = async function handler(req, res) {
 
   const supabase = getSupabaseAdmin();
 
-  let findQ = supabase.from("job_seekers").select("id, name").eq("id", jobSeekerId);
+  let findQ = supabase.from("m_job_seekers").select("id, name").eq("id", jobSeekerId);
   findQ = await applyJobSeekersScope(findQ, ctx, supabase);
   const { data: seeker } = await findQ.maybeSingle();
   if (!seeker) return res.status(404).json({ error: "転職者が見つかりません" });
@@ -60,7 +60,7 @@ module.exports = async function handler(req, res) {
         : { cv_drive_file_id: uploaded.id, cv_file_name: uploaded.name };
 
     const { data, error } = await supabase
-      .from("job_seekers")
+      .from("m_job_seekers")
       .update({ ...update, updated_at: new Date().toISOString() })
       .eq("id", jobSeekerId)
       .select("id, resume_drive_file_id, resume_file_name, cv_drive_file_id, cv_file_name")

@@ -18,7 +18,7 @@ module.exports = async function handler(req, res) {
   const memoId = req.query.id;
 
   async function verifyCompanyAccess(cid) {
-    let q = supabase.from("client_companies").select("id").eq("id", cid);
+    let q = supabase.from("m_client_companies").select("id").eq("id", cid);
     q = applyClientCompaniesScope(q, ctx);
     const { data } = await q.maybeSingle();
     return !!data;
@@ -29,7 +29,7 @@ module.exports = async function handler(req, res) {
       return res.status(404).json({ error: "採用企業が見つかりません" });
     }
     let query = supabase
-      .from("company_memos")
+      .from("t_company_memos")
       .select("id, client_company_id, title, content, memo_type, created_at, updated_at, created_by_member_id")
       .eq("client_company_id", companyId)
       .order("created_at", { ascending: false });
@@ -41,7 +41,7 @@ module.exports = async function handler(req, res) {
     let nameMap = {};
     if (memberIds.length > 0) {
       const { data: members } = await supabase
-        .from("members")
+        .from("m_members")
         .select("id, display_name")
         .in("id", memberIds);
       (members || []).forEach((m) => {
@@ -71,7 +71,7 @@ module.exports = async function handler(req, res) {
       created_by_member_id: ctx.member.id,
       updated_by_member_id: ctx.member.id,
     };
-    const { data, error } = await supabase.from("company_memos").insert(row).select("*").single();
+    const { data, error } = await supabase.from("t_company_memos").insert(row).select("*").single();
     if (error) return res.status(500).json({ error: error.message });
     return res.status(201).json({
       memo: {
@@ -82,7 +82,7 @@ module.exports = async function handler(req, res) {
   }
 
   if (req.method === "PATCH" && memoId) {
-    let findQ = supabase.from("company_memos").select("id").eq("id", memoId);
+    let findQ = supabase.from("t_company_memos").select("id").eq("id", memoId);
     findQ = applyCompanyMemosScope(findQ, ctx);
     const { data: found } = await findQ.maybeSingle();
     if (!found) return res.status(404).json({ error: "メモが見つかりません" });
@@ -100,7 +100,7 @@ module.exports = async function handler(req, res) {
     if (body.memo_type !== undefined) update.memo_type = body.memo_type;
 
     const { data, error } = await supabase
-      .from("company_memos")
+      .from("t_company_memos")
       .update(update)
       .eq("id", memoId)
       .select("*")
@@ -110,11 +110,11 @@ module.exports = async function handler(req, res) {
   }
 
   if (req.method === "DELETE" && memoId) {
-    let findQ = supabase.from("company_memos").select("id").eq("id", memoId);
+    let findQ = supabase.from("t_company_memos").select("id").eq("id", memoId);
     findQ = applyCompanyMemosScope(findQ, ctx);
     const { data: found } = await findQ.maybeSingle();
     if (!found) return res.status(404).json({ error: "メモが見つかりません" });
-    const { error } = await supabase.from("company_memos").delete().eq("id", memoId);
+    const { error } = await supabase.from("t_company_memos").delete().eq("id", memoId);
     if (error) return res.status(500).json({ error: error.message });
     return res.status(200).json({ success: true });
   }

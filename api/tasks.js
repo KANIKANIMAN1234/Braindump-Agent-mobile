@@ -27,11 +27,11 @@ module.exports = async function handler(req, res) {
     let companyMap = {};
     let seekerMap = {};
     if (companyIds.length) {
-      const { data } = await supabase.from("client_companies").select("id, name").in("id", companyIds);
+      const { data } = await supabase.from("m_client_companies").select("id, name").in("id", companyIds);
       (data || []).forEach((c) => { companyMap[c.id] = c.name; });
     }
     if (seekerIds.length) {
-      const { data } = await supabase.from("job_seekers").select("id, name").in("id", seekerIds);
+      const { data } = await supabase.from("m_job_seekers").select("id, name").in("id", seekerIds);
       (data || []).forEach((s) => { seekerMap[s.id] = s.name; });
     }
     return tasks.map((t) => ({
@@ -43,7 +43,7 @@ module.exports = async function handler(req, res) {
 
   if (req.method === "GET") {
     let query = supabase
-      .from("tasks")
+      .from("t_tasks")
       .select(TASK_SELECT)
       .or("completed.eq.false,completed.is.null")
       .order("due_date", { ascending: true, nullsFirst: false })
@@ -76,7 +76,7 @@ module.exports = async function handler(req, res) {
       client_company_id: body.client_company_id || null,
       job_seeker_id: body.job_seeker_id || null,
     });
-    const { data, error } = await supabase.from("tasks").insert(row).select(TASK_SELECT).single();
+    const { data, error } = await supabase.from("t_tasks").insert(row).select(TASK_SELECT).single();
     if (error) return res.status(500).json({ error: error.message });
     const [enriched] = await enrichTasks([data]);
     return res.status(201).json({ task: enriched });
@@ -87,7 +87,7 @@ module.exports = async function handler(req, res) {
     const { id, action, result, priority, due_date, title } = body;
     if (!id) return res.status(400).json({ error: "id は必須です" });
 
-    let findQuery = supabase.from("tasks").select("id, title").eq("id", id);
+    let findQuery = supabase.from("t_tasks").select("id, title").eq("id", id);
     findQuery = applyTasksScope(findQuery, ctx);
     const { data: tasks, error: findError } = await findQuery;
     if (findError) return res.status(500).json({ error: findError.message });
@@ -115,7 +115,7 @@ module.exports = async function handler(req, res) {
     }
 
     const { data, error: updateError } = await supabase
-      .from("tasks")
+      .from("t_tasks")
       .update(updateData)
       .eq("id", id)
       .select(TASK_SELECT)
@@ -128,11 +128,11 @@ module.exports = async function handler(req, res) {
   if (req.method === "DELETE") {
     const id = req.query.id || req.body?.id;
     if (!id) return res.status(400).json({ error: "id は必須です" });
-    let findQuery = supabase.from("tasks").select("id").eq("id", id);
+    let findQuery = supabase.from("t_tasks").select("id").eq("id", id);
     findQuery = applyTasksScope(findQuery, ctx);
     const { data: tasks } = await findQuery;
     if (!tasks?.length) return res.status(404).json({ error: "タスクが見つかりません" });
-    const { error } = await supabase.from("tasks").delete().eq("id", id);
+    const { error } = await supabase.from("t_tasks").delete().eq("id", id);
     if (error) return res.status(500).json({ error: error.message });
     return res.status(200).json({ success: true });
   }

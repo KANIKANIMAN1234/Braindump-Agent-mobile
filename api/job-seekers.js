@@ -19,7 +19,7 @@ module.exports = async function handler(req, res) {
     if (!rows?.length || ctx.legacy) return rows;
     const memberIds = [...new Set(rows.map((r) => r.member_id))];
     const { data: members } = await supabase
-      .from("members")
+      .from("m_members")
       .select("id, display_name")
       .in("id", memberIds);
     const map = {};
@@ -33,7 +33,7 @@ module.exports = async function handler(req, res) {
   }
 
   if (req.method === "GET" && !id) {
-    let query = supabase.from("job_seekers").select(FIELDS).order("updated_at", { ascending: false });
+    let query = supabase.from("m_job_seekers").select(FIELDS).order("updated_at", { ascending: false });
     query = await applyJobSeekersScope(query, ctx, supabase);
     const q = req.query.q;
     if (q) query = query.ilike("name", `%${q}%`);
@@ -44,7 +44,7 @@ module.exports = async function handler(req, res) {
   }
 
   if (req.method === "GET" && id) {
-    let query = supabase.from("job_seekers").select(FIELDS).eq("id", id);
+    let query = supabase.from("m_job_seekers").select(FIELDS).eq("id", id);
     query = await applyJobSeekersScope(query, ctx, supabase);
     const { data, error } = await query.maybeSingle();
     if (error) return res.status(500).json({ error: error.message });
@@ -70,13 +70,13 @@ module.exports = async function handler(req, res) {
       notes: body.notes || null,
     });
 
-    const { data, error } = await supabase.from("job_seekers").insert(row).select(FIELDS).single();
+    const { data, error } = await supabase.from("m_job_seekers").insert(row).select(FIELDS).single();
     if (error) return res.status(500).json({ error: error.message });
     return res.status(201).json({ jobSeeker: data });
   }
 
   if (req.method === "PATCH" && id) {
-    let findQ = supabase.from("job_seekers").select("id").eq("id", id);
+    let findQ = supabase.from("m_job_seekers").select("id").eq("id", id);
     findQ = await applyJobSeekersScope(findQ, ctx, supabase);
     const { data: found } = await findQ.maybeSingle();
     if (!found) return res.status(404).json({ error: "転職者が見つかりません" });
@@ -100,7 +100,7 @@ module.exports = async function handler(req, res) {
     });
 
     const { data, error } = await supabase
-      .from("job_seekers")
+      .from("m_job_seekers")
       .update(update)
       .eq("id", id)
       .select(FIELDS)
@@ -110,11 +110,11 @@ module.exports = async function handler(req, res) {
   }
 
   if (req.method === "DELETE" && id) {
-    let findQ = supabase.from("job_seekers").select("id").eq("id", id);
+    let findQ = supabase.from("m_job_seekers").select("id").eq("id", id);
     findQ = await applyJobSeekersScope(findQ, ctx, supabase);
     const { data: found } = await findQ.maybeSingle();
     if (!found) return res.status(404).json({ error: "転職者が見つかりません" });
-    const { error } = await supabase.from("job_seekers").delete().eq("id", id);
+    const { error } = await supabase.from("m_job_seekers").delete().eq("id", id);
     if (error) return res.status(500).json({ error: error.message });
     return res.status(200).json({ success: true });
   }

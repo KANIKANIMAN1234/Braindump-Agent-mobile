@@ -24,7 +24,7 @@ module.exports = async function handler(req, res) {
 
   if (req.method === "GET") {
     const { data, error } = await supabase
-      .from("organizations")
+      .from("m_organizations")
       .select(
         "id, name, postal_code, address, phone, org_structure_depth, status, created_at, updated_at"
       )
@@ -53,7 +53,7 @@ module.exports = async function handler(req, res) {
     }
 
     const { data: org, error: orgError } = await supabase
-      .from("organizations")
+      .from("m_organizations")
       .insert({
         name: name.trim(),
         postal_code: postal_code?.trim() || null,
@@ -82,7 +82,7 @@ module.exports = async function handler(req, res) {
       }
 
       const { data: member, error: memberError } = await supabase
-        .from("members")
+        .from("m_members")
         .insert({
           organization_id: org.id,
           role: "org_admin",
@@ -96,7 +96,7 @@ module.exports = async function handler(req, res) {
 
       const code = generateInviteCode();
       const { data: invite, error: inviteError } = await supabase
-        .from("member_invites")
+        .from("t_member_invites")
         .insert({
           member_id: member.id,
           code,

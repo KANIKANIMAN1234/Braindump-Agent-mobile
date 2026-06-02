@@ -12,7 +12,7 @@ module.exports = async function handler(req, res) {
   const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString();
 
   let query = supabase
-    .from("chat_messages")
+    .from("t_chat_messages")
     .select("id, role, content, created_at")
     .gte("created_at", twelveHoursAgo)
     .order("created_at", { ascending: true });

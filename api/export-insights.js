@@ -27,7 +27,7 @@ module.exports = async function handler(req, res) {
   const supabase = getSupabaseAdmin();
 
   let query = supabase
-    .from("insights")
+    .from("t_insights")
     .select("id, content, tags, created_at")
     .is("exported_at", null)
     .order("created_at", { ascending: true });
@@ -62,7 +62,7 @@ module.exports = async function handler(req, res) {
 
     const ids = data.map((r) => r.id);
     const { error: updateError } = await supabase
-      .from("insights")
+      .from("t_insights")
       .update({ exported_at: new Date().toISOString(), export_destination: "google_drive" })
       .in("id", ids);
     if (updateError) return res.status(500).json({ error: updateError.message });
