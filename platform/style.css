@@ -1,63 +1,69 @@
-/* AgentDump 運営コンソール — Blue Bottle Coffee Japan デザイン準拠 */
+/* AgentDump 運営コンソール — KEYUCA（ケユカ）デザイン準拠 */
 
 :root {
-  --brand-blue: #00a9e0;
-  --link-gold: #a17c51;
-  --text-primary: #454545;
-  --text-header: #333333;
-  --text-secondary: #7e7e7e;
-  --border: #e3e3e3;
-  --border-header: #e0e0e0;
-  --warm-beige: #f1e4d8;
-  --white: #ffffff;
-  --sale-red: #f94c43;
-  --font-body: "Zen Kaku Gothic New", sans-serif;
-  --font-cta: Figtree, sans-serif;
-  --radius: 0;
-  --ls-heading: 0.04em;
-  --ls-cta: 0.2em;
+  --brand-gold: #aa9977;
+  --brand-copper: #c28358;
+  --btn-grey: #878787;
+  --text-primary: #323333;
+  --text-secondary: #878787;
+  --text-muted: #707070;
+  --bg-primary: #f3f3f3;
+  --bg-secondary: #f9f9f9;
+  --surface-white: #ffffff;
+  --border-light: #e2e2e2;
+  --error: #ee2200;
+  --font-jp: "Zen Kaku Gothic New", sans-serif;
+  --font-en: Lato, sans-serif;
+  --radius: 6px;
+  --radius-pill: 20px;
+  --ls: 0.05em;
+  --fw: 500;
 }
 
 * { box-sizing: border-box; }
 
 body {
   margin: 0;
-  font-family: var(--font-body);
-  font-size: 14px;
-  font-weight: 400;
+  font-family: var(--font-jp);
+  font-size: 13px;
+  font-weight: var(--fw);
   line-height: 2;
-  background: var(--white);
+  letter-spacing: var(--ls);
+  background: var(--bg-primary);
   color: var(--text-primary);
+  font-feature-settings: normal;
 }
 
 .wrap {
   max-width: 720px;
   margin: 0 auto;
-  padding: 48px 32px;
+  padding: 40px 32px;
 }
 
-header { margin-bottom: 48px; }
+header { margin-bottom: 40px; }
 
 header h1 {
   margin: 0 0 0.25rem;
-  font-size: 24px;
-  font-weight: 400;
-  letter-spacing: var(--ls-heading);
+  font-size: 28px;
+  font-weight: var(--fw);
+  letter-spacing: var(--ls);
   line-height: 2;
   color: var(--text-primary);
 }
 
 .sub {
   margin: 0;
+  font-family: var(--font-en);
   color: var(--text-secondary);
-  font-size: 12px;
+  font-size: 11px;
   line-height: 2;
+  letter-spacing: var(--ls);
 }
 
 .card {
-  background: var(--white);
+  background: var(--surface-white);
   border-radius: var(--radius);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-light);
   padding: 24px;
   margin-bottom: 24px;
   box-shadow: none;
@@ -66,16 +72,16 @@ header h1 {
 .card h2 {
   margin: 0 0 1rem;
   font-size: 16px;
-  font-weight: 400;
-  letter-spacing: var(--ls-heading);
+  font-weight: var(--fw);
+  letter-spacing: var(--ls);
   line-height: 2;
 }
 
 .card h3 {
   margin: 1rem 0 0.5rem;
-  font-size: 12px;
-  font-weight: 400;
-  letter-spacing: var(--ls-heading);
+  font-size: 13px;
+  font-weight: var(--fw);
+  letter-spacing: var(--ls);
   color: var(--text-primary);
   line-height: 2;
 }
@@ -83,9 +89,9 @@ header h1 {
 label {
   display: block;
   margin-bottom: 0.75rem;
-  font-size: 10px;
-  font-weight: 400;
-  letter-spacing: var(--ls-heading);
+  font-size: 11px;
+  font-weight: var(--fw);
+  letter-spacing: var(--ls);
   color: var(--text-secondary);
   line-height: 2;
 }
@@ -96,60 +102,58 @@ label select {
   width: 100%;
   margin-top: 0.35rem;
   padding: 12px 14px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-light);
   border-radius: var(--radius);
-  font-size: 12px;
-  font-weight: 400;
-  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: var(--fw);
+  font-family: var(--font-jp);
+  letter-spacing: var(--ls);
   color: var(--text-primary);
-  background: var(--white);
+  background: var(--surface-white);
 }
 
 label input:focus,
 label select:focus {
-  border-color: var(--brand-blue);
+  border-color: var(--text-muted);
   outline: none;
 }
 
-.req { color: var(--sale-red); }
+.req { color: var(--error); }
 
 hr {
   border: none;
-  border-top: 1px solid var(--border-header);
+  border-top: 1px solid var(--border-light);
   margin: 1rem 0;
 }
 
 button {
   padding: 10px 20px;
   border-radius: var(--radius);
-  border: 1px solid var(--text-secondary);
-  background: transparent;
+  border: none;
+  background: var(--btn-grey);
   cursor: pointer;
-  font-size: 12px;
-  font-family: var(--font-body);
-  font-weight: 400;
-  letter-spacing: var(--ls-heading);
-  color: var(--text-primary);
+  font-size: 13px;
+  font-family: var(--font-jp);
+  font-weight: var(--fw);
+  letter-spacing: var(--ls);
+  color: var(--surface-white);
   transition: opacity 0.15s;
 }
 
-button:hover { opacity: 0.75; }
+button:hover { opacity: 0.85; }
 
 button.primary {
-  font-family: var(--font-cta);
-  letter-spacing: var(--ls-cta);
-  text-transform: uppercase;
-  background: transparent;
-  color: var(--brand-blue);
-  border-color: var(--brand-blue);
+  background: var(--btn-grey);
+  color: var(--surface-white);
+  font-size: 16px;
   margin-top: 0.5rem;
 }
 
 .result-area { margin-top: 1rem; }
 
 .invite-highlight {
-  background: var(--warm-beige);
-  border: 1px solid var(--brand-blue);
+  background: var(--bg-secondary);
+  border: 1px solid var(--brand-gold);
   border-radius: var(--radius);
   padding: 1rem;
   margin-bottom: 0.75rem;
@@ -157,10 +161,10 @@ button.primary {
 
 .invite-highlight h3 {
   margin: 0 0 0.75rem;
-  font-size: 12px;
-  font-weight: 400;
-  letter-spacing: var(--ls-heading);
-  color: var(--brand-blue);
+  font-size: 13px;
+  font-weight: var(--fw);
+  letter-spacing: var(--ls);
+  color: var(--brand-gold);
   line-height: 2;
 }
 
@@ -173,38 +177,36 @@ button.primary {
 .invite-url-input {
   flex: 1;
   padding: 12px 14px;
-  font-size: 10px;
-  border: 1px solid var(--border);
+  font-size: 11px;
+  border: 1px solid var(--border-light);
   border-radius: var(--radius);
-  background: var(--white);
+  background: var(--surface-white);
   color: var(--text-primary);
   word-break: break-all;
-  font-family: var(--font-body);
+  font-family: var(--font-jp);
+  letter-spacing: var(--ls);
 }
 
 .btn-copy {
   flex-shrink: 0;
-  background: transparent;
-  color: var(--brand-blue);
-  border: 1px solid var(--brand-blue);
+  background: var(--btn-grey);
+  color: var(--surface-white);
+  border: none;
   border-radius: var(--radius);
   padding: 0 1rem;
-  font-family: var(--font-cta);
-  font-weight: 400;
-  letter-spacing: var(--ls-cta);
-  text-transform: uppercase;
+  font-weight: var(--fw);
+  letter-spacing: var(--ls);
   cursor: pointer;
   white-space: nowrap;
 }
 
 .btn-copy.copied {
-  color: var(--link-gold);
-  border-color: var(--link-gold);
+  background: var(--brand-copper);
 }
 
 .invite-meta {
   margin: 0.65rem 0 0;
-  font-size: 10px;
+  font-size: 11px;
   color: var(--text-secondary);
   line-height: 2;
 }
@@ -213,7 +215,7 @@ button.primary {
 
 .result-details summary {
   cursor: pointer;
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-secondary);
   margin-bottom: 0.35rem;
   line-height: 2;
@@ -222,10 +224,10 @@ button.primary {
 .result {
   margin-top: 0.35rem;
   padding: 0.75rem;
-  background: var(--warm-beige);
-  border: 1px solid var(--border);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-light);
   border-radius: var(--radius);
-  font-size: 10px;
+  font-size: 11px;
   overflow-x: auto;
   white-space: pre-wrap;
   word-break: break-all;
@@ -236,24 +238,25 @@ button.primary {
 
 .org-item {
   padding: 0.75rem;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-light);
   border-radius: var(--radius);
   margin-bottom: 0.5rem;
-  font-size: 12px;
+  font-size: 13px;
   line-height: 2;
+  background: var(--surface-white);
 }
 
 .org-item strong {
   display: block;
   margin-bottom: 0.25rem;
-  font-weight: 400;
-  letter-spacing: var(--ls-heading);
+  font-weight: var(--fw);
+  letter-spacing: var(--ls);
 }
 
 .error {
-  color: var(--sale-red);
-  font-size: 12px;
+  color: var(--error);
+  font-size: 13px;
   line-height: 2;
 }
 
-a { color: var(--link-gold); }
+a { color: var(--brand-gold); }
