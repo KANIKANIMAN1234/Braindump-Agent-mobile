@@ -38,3 +38,14 @@ npx vercel dev
 ## デプロイ
 
 Vercel に本リポジトリを連携。LIFF エンドポイント URL を `/app/` に設定。
+
+**Vercel プロジェクト設定（重要）**
+
+| 項目 | 設定値 |
+|------|--------|
+| Framework Preset | **Other**（Next.js ではない） |
+| Root Directory | （空欄） |
+| Build Command | （空欄） |
+| Output Directory | （空欄） |
+
+`app/` フォルダがあるため Next.js と誤検出される場合があります。`package.json` の `vercel-build` スクリプトで回避しますが、上記設定も確認してください。

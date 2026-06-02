@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AgentDump 運営コンソール（Phase 1）</title>
+  <link rel="stylesheet" href="platform-console.css" />
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>AgentDump 運営コンソール</h1>
+      <p class="sub">Phase 1 — 法人登録・代表管理者招待</p>
+    </header>
+
+    <section class="card" id="auth-section">
+      <h2>運営認証</h2>
+      <label>
+        PLATFORM_ADMIN_SECRET
+        <input type="password" id="platform-secret" autocomplete="off" />
+      </label>
+      <button type="button" id="btn-save-secret">秘密鍵を保存（セッションのみ）</button>
+    </section>
+
+    <section class="card" id="org-form-section" hidden>
+      <h2>法人登録</h2>
+      <form id="org-form">
+        <label>法人名 <span class="req">*</span>
+          <input type="text" name="name" required placeholder="株式会社サンプル" />
+        </label>
+        <label>郵便番号
+          <input type="text" name="postal_code" placeholder="100-0001" />
+        </label>
+        <label>住所
+          <input type="text" name="address" placeholder="東京都千代田区…" />
+        </label>
+        <label>代表電話番号
+          <input type="tel" name="phone" placeholder="03-1234-5678" />
+        </label>
+        <hr />
+        <h3>代表管理者（同時招待・任意）</h3>
+        <label>代表者氏名
+          <input type="text" name="rep_name" placeholder="山田 太郎" />
+        </label>
+        <button type="submit" class="primary">法人を登録</button>
+      </form>
+      <div id="org-result-area" class="result-area" hidden>
+        <div id="org-invite-box" class="invite-highlight" hidden></div>
+        <details class="result-details">
+          <summary>レスポンス詳細（JSON）</summary>
+          <pre id="org-result" class="result"></pre>
+        </details>
+      </div>
+    </section>
+
+    <section class="card" id="invite-section" hidden>
+      <h2>代表管理者を招待（既存法人）</h2>
+      <form id="invite-form">
+        <label>法人
+          <select id="invite-org-select" required></select>
+        </label>
+        <label>代表者氏名 <span class="req">*</span>
+          <input type="text" id="invite-rep-name" required placeholder="山田 太郎" />
+        </label>
+        <button type="submit" class="primary">招待 URL を発行</button>
+      </form>
+      <div id="invite-result-area" class="result-area" hidden>
+        <div id="invite-invite-box" class="invite-highlight" hidden></div>
+        <details class="result-details">
+          <summary>レスポンス詳細（JSON）</summary>
+          <pre id="invite-result" class="result"></pre>
+        </details>
+      </div>
+    </section>
+
+    <section class="card" id="list-section" hidden>
+      <h2>法人一覧</h2>
+      <button type="button" id="btn-refresh">再読み込み</button>
+      <div id="org-list" class="org-list"></div>
+    </section>
+
+    <p id="global-error" class="error" hidden></p>
+  </div>
+  <script src="platform-console.js"></script>
+</body>
+</html>

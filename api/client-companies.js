@@ -1,7 +1,7 @@
-const { getSupabaseAdmin } = require("../supabase-admin");
-const { requireLineMember } = require("../require-member");
-const { applyClientCompaniesScope } = require("../data-scope");
-const { handleOptions } = require("../cors");
+const { getSupabaseAdmin } = require("../lib/supabase-admin");
+const { requireLineMember } = require("../lib/require-member");
+const { applyClientCompaniesScope } = require("../lib/data-scope");
+const { handleOptions } = require("../lib/cors");
 
 const COMPANY_FIELDS =
   "id, name, job_posting, company_culture, internal_notes, hr_name, hr_phone, hr_email, dept_manager_name, dept_manager_phone, dept_manager_email, window_contact_name, window_contact_phone, window_contact_email, created_at, updated_at";

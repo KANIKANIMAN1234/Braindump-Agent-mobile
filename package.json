@@ -2,9 +2,12 @@
   "name": "agentdump-mobile",
   "version": "1.0.0",
   "private": true,
+  "scripts": {
+    "vercel-build": "node -e \"process.exit(0)\""
+  },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.4",
-    "googleapis": "^144.0.0",
+    "google-auth-library": "^9.15.1",
     "openai": "^4.100.0"
   }
 }
