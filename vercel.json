@@ -1,0 +1,9 @@
+{
+  "rewrites": [
+    { "source": "/app", "destination": "/app/index.html" },
+    { "source": "/app/", "destination": "/app/index.html" },
+    { "source": "/app/platform-console", "destination": "/app/platform-console.html" },
+    { "source": "/platform", "destination": "/platform/index.html" },
+    { "source": "/platform/", "destination": "/platform/index.html" }
+  ]
+}

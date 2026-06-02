@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>AgentDump</title>
+  <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <link rel="stylesheet" href="style.css?v=1" />
+</head>
+<body>
+
+  <div id="loading-overlay" class="mobile-loading">
+    <div class="mobile-loading-icon">📋</div>
+    <div class="mobile-loading-title">AgentDump</div>
+    <div class="mobile-loading-sub">読み込み中...</div>
+  </div>
+
+  <div id="app-shell" class="app-shell hidden">
+    <div id="view-chat" class="chat-wrap">
+      <header class="chat-header">
+        <div class="header-brand">
+          <div class="header-avatar">📋</div>
+          <div class="header-info">
+            <div class="header-name">AgentDump</div>
+            <div class="header-sub">転職エージェント向け</div>
+          </div>
+        </div>
+        <div class="header-right">
+          <button type="button" id="btn-org-admin" class="header-admin-btn" hidden title="組織管理">⚙️</button>
+          <span class="header-org-name" id="header-org-name" hidden></span>
+          <span class="header-user-name" id="header-user-name"></span>
+          <img class="header-user-icon" id="header-user-icon" src="" alt="" style="display:none;" />
+        </div>
+      </header>
+
+      <main class="chat-body" id="chat-body"></main>
+
+      <div class="quick-actions">
+        <button class="qa-btn" id="qa-task">＋ タスク</button>
+        <button class="qa-btn" id="qa-list">📋 一覧</button>
+        <button class="qa-btn" id="qa-complete">✅ 完了</button>
+        <button class="qa-btn" id="qa-insight">💡 気づき</button>
+        <button class="qa-btn" id="qa-export">📤 出力</button>
+        <button class="qa-btn" id="qa-update-priority">🔄 優先度</button>
+        <button class="qa-btn" id="qa-update-due">📅 期日</button>
+      </div>
+
+      <footer class="chat-footer">
+        <textarea id="user-input" class="chat-input" placeholder="メッセージを入力..." rows="1"></textarea>
+        <button id="mic-btn" class="mic-btn" aria-label="音声入力" title="音声入力">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm-1 1.93c-3.94-.49-7-3.85-7-7.93H2c0 4.97 3.59 9.1 8.35 9.84V21h3v-2.23C18.41 18.1 22 13.97 22 9h-2c0 4.08-3.06 7.44-7 7.93V15.93z"/></svg>
+        </button>
+        <button id="send-btn" class="send-btn" aria-label="送信">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+        </button>
+      </footer>
+    </div>
+
+    <div id="view-companies" class="mobile-panel hidden"></div>
+    <div id="view-seekers" class="mobile-panel hidden"></div>
+    <div id="view-insights" class="mobile-panel hidden"></div>
+    <div id="view-settings" class="mobile-panel hidden"></div>
+
+    <nav class="bottom-nav">
+      <button type="button" class="bottom-nav-item active" data-view="chat"><span>💬</span><small>チャット</small></button>
+      <button type="button" class="bottom-nav-item" data-view="companies"><span>🏢</span><small>企業</small></button>
+      <button type="button" class="bottom-nav-item" data-view="seekers"><span>👤</span><small>転職者</small></button>
+      <button type="button" class="bottom-nav-item" data-view="insights"><span>💡</span><small>気づき</small></button>
+      <button type="button" class="bottom-nav-item" data-view="settings"><span>⚙️</span><small>設定</small></button>
+    </nav>
+  </div>
+
+  <div id="org-overlay" class="org-overlay" hidden>
+    <div id="org-panel" class="org-panel"></div>
+  </div>
+
+  <div id="sheet-overlay" class="sheet-overlay hidden">
+    <div class="sheet" id="sheet-content"></div>
+  </div>
+
+  <script src="api-client.js?v=1"></script>
+  <script src="panels.js?v=1"></script>
+  <script src="org-admin.js?v=1"></script>
+  <script src="main.js?v=1"></script>
+</body>
+</html>
