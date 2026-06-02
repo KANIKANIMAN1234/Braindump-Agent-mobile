@@ -1,23 +1,17 @@
-/* AgentDump 運営コンソール — KEYUCA（ケユカ）デザイン準拠 */
+/* AgentDump 運営コンソール — DULTON（ダルトン）デザイン準拠 */
 
 :root {
-  --brand-gold: #aa9977;
-  --brand-copper: #c28358;
-  --btn-grey: #878787;
-  --text-primary: #323333;
-  --text-secondary: #878787;
-  --text-muted: #707070;
-  --bg-primary: #f3f3f3;
-  --bg-secondary: #f9f9f9;
-  --surface-white: #ffffff;
-  --border-light: #e2e2e2;
-  --error: #ee2200;
-  --font-jp: "Zen Kaku Gothic New", sans-serif;
-  --font-en: Lato, sans-serif;
-  --radius: 6px;
-  --radius-pill: 20px;
-  --ls: 0.05em;
-  --fw: 500;
+  --dulton-navy: #001a60;
+  --dulton-red: #ce0000;
+  --text-dark: #333333;
+  --gray-dark: #444444;
+  --border: #cccccc;
+  --surface-light: #f5f5f5;
+  --surface-blue: #eef5f9;
+  --white: #ffffff;
+  --font-jp: "Noto Sans JP", Meiryo, "Hiragino Kaku Gothic Pro", sans-serif;
+  --font-en: "Arial Black", arial, sans-serif;
+  --radius: 0;
 }
 
 * { box-sizing: border-box; }
@@ -25,75 +19,80 @@
 body {
   margin: 0;
   font-family: var(--font-jp);
-  font-size: 13px;
-  font-weight: var(--fw);
-  line-height: 2;
-  letter-spacing: var(--ls);
-  background: var(--bg-primary);
-  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.6;
+  letter-spacing: normal;
+  background: var(--surface-light);
+  color: var(--text-dark);
   font-feature-settings: normal;
 }
 
 .wrap {
   max-width: 720px;
   margin: 0 auto;
-  padding: 40px 32px;
+  padding: 48px 24px;
 }
 
-header { margin-bottom: 40px; }
+header {
+  margin-bottom: 32px;
+  padding-bottom: 16px;
+  border-bottom: 3px solid var(--dulton-navy);
+}
 
 header h1 {
   margin: 0 0 0.25rem;
-  font-size: 28px;
-  font-weight: var(--fw);
-  letter-spacing: var(--ls);
-  line-height: 2;
-  color: var(--text-primary);
+  font-family: var(--font-en);
+  font-size: 24px;
+  font-weight: 400;
+  line-height: 1.4;
+  color: var(--dulton-navy);
 }
 
 .sub {
   margin: 0;
-  font-family: var(--font-en);
-  color: var(--text-secondary);
-  font-size: 11px;
-  line-height: 2;
-  letter-spacing: var(--ls);
+  font-size: 12px;
+  color: var(--gray-dark);
+  line-height: 1.6;
 }
 
 .card {
-  background: var(--surface-white);
+  background: var(--white);
   border-radius: var(--radius);
-  border: 1px solid var(--border-light);
-  padding: 24px;
-  margin-bottom: 24px;
+  border: 1px solid var(--border);
+  padding: 16px;
+  margin-bottom: 16px;
   box-shadow: none;
 }
 
 .card h2 {
   margin: 0 0 1rem;
-  font-size: 16px;
-  font-weight: var(--fw);
-  letter-spacing: var(--ls);
-  line-height: 2;
+  font-family: var(--font-en);
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  line-height: 1.5;
+  color: var(--dulton-navy);
+  text-transform: uppercase;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
 }
 
 .card h3 {
   margin: 1rem 0 0.5rem;
-  font-size: 13px;
-  font-weight: var(--fw);
-  letter-spacing: var(--ls);
-  color: var(--text-primary);
-  line-height: 2;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-dark);
+  line-height: 1.6;
 }
 
 label {
   display: block;
   margin-bottom: 0.75rem;
   font-size: 11px;
-  font-weight: var(--fw);
-  letter-spacing: var(--ls);
-  color: var(--text-secondary);
-  line-height: 2;
+  font-weight: 400;
+  color: var(--gray-dark);
+  line-height: 1.5;
 }
 
 label input,
@@ -101,59 +100,57 @@ label select {
   display: block;
   width: 100%;
   margin-top: 0.35rem;
-  padding: 12px 14px;
-  border: 1px solid var(--border-light);
+  padding: 8px 12px;
+  border: 1px solid var(--border);
   border-radius: var(--radius);
-  font-size: 13px;
-  font-weight: var(--fw);
+  font-size: 12px;
+  font-weight: 400;
   font-family: var(--font-jp);
-  letter-spacing: var(--ls);
-  color: var(--text-primary);
-  background: var(--surface-white);
+  color: var(--text-dark);
+  background: var(--white);
+  height: 36px;
 }
 
 label input:focus,
 label select:focus {
-  border-color: var(--text-muted);
+  border: 2px solid var(--dulton-navy);
   outline: none;
 }
 
-.req { color: var(--error); }
+.req { color: var(--dulton-red); }
 
 hr {
   border: none;
-  border-top: 1px solid var(--border-light);
+  border-top: 1px solid var(--border);
   margin: 1rem 0;
 }
 
 button {
-  padding: 10px 20px;
+  padding: 8px 16px;
   border-radius: var(--radius);
   border: none;
-  background: var(--btn-grey);
+  background: var(--gray-dark);
   cursor: pointer;
-  font-size: 13px;
+  font-size: 12px;
   font-family: var(--font-jp);
-  font-weight: var(--fw);
-  letter-spacing: var(--ls);
-  color: var(--surface-white);
+  font-weight: 400;
+  color: var(--white);
   transition: opacity 0.15s;
 }
 
-button:hover { opacity: 0.85; }
+button:hover { opacity: 0.88; }
 
 button.primary {
-  background: var(--btn-grey);
-  color: var(--surface-white);
-  font-size: 16px;
+  background: var(--dulton-navy);
+  color: var(--white);
   margin-top: 0.5rem;
 }
 
 .result-area { margin-top: 1rem; }
 
 .invite-highlight {
-  background: var(--bg-secondary);
-  border: 1px solid var(--brand-gold);
+  background: var(--surface-blue);
+  border: 1px solid var(--dulton-navy);
   border-radius: var(--radius);
   padding: 1rem;
   margin-bottom: 0.75rem;
@@ -161,11 +158,13 @@ button.primary {
 
 .invite-highlight h3 {
   margin: 0 0 0.75rem;
-  font-size: 13px;
-  font-weight: var(--fw);
-  letter-spacing: var(--ls);
-  color: var(--brand-gold);
-  line-height: 2;
+  font-family: var(--font-en);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  color: var(--dulton-navy);
+  line-height: 1.5;
+  text-transform: uppercase;
 }
 
 .invite-url-row {
@@ -176,87 +175,90 @@ button.primary {
 
 .invite-url-input {
   flex: 1;
-  padding: 12px 14px;
+  padding: 8px 12px;
   font-size: 11px;
-  border: 1px solid var(--border-light);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: var(--surface-white);
-  color: var(--text-primary);
+  background: var(--white);
+  color: var(--text-dark);
   word-break: break-all;
   font-family: var(--font-jp);
-  letter-spacing: var(--ls);
+  height: 36px;
 }
 
 .btn-copy {
   flex-shrink: 0;
-  background: var(--btn-grey);
-  color: var(--surface-white);
+  background: var(--dulton-navy);
+  color: var(--white);
   border: none;
   border-radius: var(--radius);
   padding: 0 1rem;
-  font-weight: var(--fw);
-  letter-spacing: var(--ls);
+  font-weight: 400;
   cursor: pointer;
   white-space: nowrap;
 }
 
 .btn-copy.copied {
-  background: var(--brand-copper);
+  background: var(--gray-dark);
 }
 
 .invite-meta {
   margin: 0.65rem 0 0;
-  font-size: 11px;
-  color: var(--text-secondary);
-  line-height: 2;
+  font-size: 10px;
+  color: var(--gray-dark);
+  line-height: 1.6;
 }
 
 .result-details { margin-top: 0.5rem; }
 
 .result-details summary {
   cursor: pointer;
-  font-size: 13px;
-  color: var(--text-secondary);
+  font-size: 12px;
+  color: var(--gray-dark);
   margin-bottom: 0.35rem;
-  line-height: 2;
+  line-height: 1.6;
 }
 
 .result {
   margin-top: 0.35rem;
   padding: 0.75rem;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-light);
+  background: var(--surface-light);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
-  font-size: 11px;
+  font-size: 10px;
   overflow-x: auto;
   white-space: pre-wrap;
   word-break: break-all;
-  line-height: 2;
+  line-height: 1.6;
 }
 
 .org-list { margin-top: 0.75rem; }
 
 .org-item {
   padding: 0.75rem;
-  border: 1px solid var(--border-light);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
   margin-bottom: 0.5rem;
-  font-size: 13px;
-  line-height: 2;
-  background: var(--surface-white);
+  font-size: 12px;
+  line-height: 1.6;
+  background: var(--white);
 }
 
 .org-item strong {
   display: block;
   margin-bottom: 0.25rem;
-  font-weight: var(--fw);
-  letter-spacing: var(--ls);
+  font-weight: 400;
 }
 
 .error {
-  color: var(--error);
-  font-size: 13px;
-  line-height: 2;
+  color: var(--dulton-red);
+  font-size: 12px;
+  line-height: 1.6;
 }
 
-a { color: var(--brand-gold); }
+a {
+  color: var(--gray-dark);
+  text-decoration: underline;
+}
+
+a:hover { color: var(--dulton-navy); }
