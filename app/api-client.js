@@ -61,6 +61,7 @@ const MobileAPI = {
   createCompany(body) { return this.request("/api/client-companies", { method: "POST", body: JSON.stringify(body) }); },
   parseCompanyText(content) { return this.request("/api/parse-company", { method: "POST", body: JSON.stringify({ content }) }); },
   parseCompanyContacts(body) { return this.request("/api/parse-company-contacts", { method: "POST", body: JSON.stringify(body) }); },
+  parseJobSeekerText(content) { return this.request("/api/parse-job-seeker", { method: "POST", body: JSON.stringify({ content }) }); },
   jobPostings(companyId) { return this.request(`/api/job-postings?client_company_id=${companyId}`); },
   jobPosting(id) { return this.request(`/api/job-postings?id=${id}`); },
   createJobPosting(body) { return this.request("/api/job-postings", { method: "POST", body: JSON.stringify(body) }); },

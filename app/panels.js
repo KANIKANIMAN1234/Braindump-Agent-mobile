@@ -653,9 +653,73 @@ const MobilePanels = {
     await load("");
   },
 
+  seekerImportSection() {
+    return `
+      <div class="contact-import-box">
+        <strong>転職者情報の取り込み</strong>
+        <p class="hint">職務経歴書要約・面談メモ等を貼り付けると、AI が各項目へ自動反映します。</p>
+        <label class="field"><span>転職者情報テキスト</span>
+          <textarea id="seeker-import-text" rows="5" placeholder="氏名・年齢・年収・現職・希望条件など"></textarea>
+        </label>
+        <button type="button" class="panel-btn primary" id="seeker-import-btn" style="margin-bottom:8px">AIで反映</button>
+        <div id="seeker-import-status" class="hint"></div>
+      </div>`;
+  },
+
+  applySeekerToForm(formRoot, seeker) {
+    ["name", "current_company", "desired_timing", "desired_job_type", "notes"].forEach((f) => {
+      if (seeker[f]) {
+        const el = formRoot.querySelector(`[name="${f}"]`);
+        if (el) el.value = seeker[f];
+      }
+    });
+    ["age", "current_salary_man", "desired_salary_man"].forEach((f) => {
+      if (seeker[f] != null && seeker[f] !== "") {
+        const el = formRoot.querySelector(`[name="${f}"]`);
+        if (el) el.value = seeker[f];
+      }
+    });
+    if (seeker.employment_status) {
+      const sel = formRoot.querySelector('[name="employment_status"]');
+      if (sel) sel.value = seeker.employment_status;
+    }
+  },
+
+  wireSeekerImport(formRoot) {
+    const btn = formRoot.querySelector("#seeker-import-btn");
+    const statusEl = formRoot.querySelector("#seeker-import-status");
+    if (!btn) return;
+
+    btn.onclick = async () => {
+      const text = formRoot.querySelector("#seeker-import-text")?.value?.trim() || "";
+      if (!text) {
+        showToast("転職者情報テキストを貼り付けてください");
+        return;
+      }
+      btn.disabled = true;
+      btn.textContent = "解析中…";
+      if (statusEl) statusEl.textContent = "";
+      try {
+        const data = await MobileAPI.parseJobSeekerText(text);
+        this.applySeekerToForm(formRoot, data.jobSeeker || {});
+        if (statusEl) {
+          statusEl.textContent = data.summary ? `✓ ${data.summary}` : "✓ 反映しました（保存で確定）";
+        }
+        showToast("転職者情報を反映しました");
+      } catch (e) {
+        if (statusEl) statusEl.textContent = "";
+        alert(e.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "AIで反映";
+      }
+    };
+  },
+
   seekerFormHtml(j = {}) {
     return `
       <div class="sheet-title">${j.id ? "転職者を編集" : "転職者を登録"}</div>
+      ${this.seekerImportSection()}
       <label class="field"><span>氏名 *</span><input name="name" value="${escapeHtml(j.name || "")}" required /></label>
       <label class="field"><span>年齢</span><input name="age" type="number" value="${j.age ?? ""}" /></label>
       <label class="field"><span>現年収（万円）</span><input name="current_salary_man" type="number" value="${j.current_salary_man ?? ""}" /></label>
@@ -685,6 +749,8 @@ const MobilePanels = {
     let j = {};
     if (id) j = (await MobileAPI.jobSeeker(id)).jobSeeker;
     showSheet(this.seekerFormHtml(j));
+    const sheet = document.getElementById("sheet-content");
+    this.wireSeekerImport(sheet);
     if (id) {
       document.getElementById("del-seeker").onclick = async () => {
         if (!confirm("削除しますか？")) return;
