@@ -15,6 +15,12 @@
   }
 
   async function orgApi(path, options = {}) {
+    const method = options.method || "GET";
+    const body = options.body ? JSON.parse(options.body) : undefined;
+    if (path === "/api/org/setup") return MobileAPI.orgSetup(body);
+    if (path === "/api/org/tree") return MobileAPI.orgTree();
+    if (path === "/api/org/invite") return MobileAPI.orgInvite(body);
+    if (path === "/api/org/members") return MobileAPI.orgMembers();
     const res = await fetch(path, {
       ...options,
       headers: {
@@ -434,6 +440,10 @@
       const display_name = document.getElementById("inv-name").value.trim();
       const role = document.getElementById("inv-role").value;
       const org_unit_id = document.getElementById("inv-unit").value;
+      if (!display_name) {
+        showToast("氏名を入力してください");
+        return;
+      }
       try {
         const data = await orgApi("/api/org/invite", {
           method: "POST",
@@ -520,6 +530,9 @@
           },
         }
       : latestAuth;
-    if (latestAuth) window.initOrgAdmin(latestAuth);
+    if (latestAuth) {
+      MobileAPI.me = latestAuth;
+      window.initOrgAdmin(latestAuth);
+    }
   });
 })();

@@ -267,12 +267,22 @@ async function startUpdatePriorityFlow() {
   flowData = {};
   const tasks = (await MobileAPI.tasks()).tasks || [];
   if (!tasks.length) { addMessage("未完了タスクはありません", "bot"); return; }
-  addBotMessageWithButtons("優先度を変えるタスクを選んでください", tasks.map((t) => ({ label: formatTaskLabel(t), value: t.title })), (title) => {
-    flowData.updateTitle = title;
+  addBotMessageWithButtons("優先度を変えるタスクを選んでください", tasks.map((t) => ({ label: formatTaskLabel(t), value: t.id })), (id) => {
+    const task = tasks.find((t) => t.id === id);
     addBotMessageWithButtons("新しい優先度", [
       { label: "🔴 高", value: "高" }, { label: "🟡 中", value: "中" }, { label: "🟢 低", value: "低" },
     ], async (p) => {
-      await callChat(`「${title}」の優先度を${p}に変更して`);
+      setInputEnabled(false);
+      const typing = addTyping();
+      try {
+        await MobileAPI.updateTask({ id, priority: p });
+        typing.remove();
+        addMessage(`「${task.title}」の優先度を${p}に変更しました`, "bot");
+      } catch (e) {
+        typing.remove();
+        addMessage(e.message, "bot");
+      }
+      setInputEnabled(true);
     });
   });
 }
@@ -281,8 +291,9 @@ async function startUpdateDueFlow() {
   flowData = {};
   const tasks = (await MobileAPI.tasks()).tasks || [];
   if (!tasks.length) { addMessage("未完了タスクはありません", "bot"); return; }
-  addBotMessageWithButtons("期日を変えるタスクを選んでください", tasks.map((t) => ({ label: formatTaskLabel(t), value: t.title })), (title) => {
-    flowData.updateTitle = title;
+  addBotMessageWithButtons("期日を変えるタスクを選んでください", tasks.map((t) => ({ label: formatTaskLabel(t), value: t.id })), (id) => {
+    flowData.updateTaskId = id;
+    flowData.updateTitle = tasks.find((t) => t.id === id)?.title || "";
     currentState = STATE.TASK_UPDATE_DUE_DATE;
     setInputEnabled(true);
     addMessage("新しい期日（例: 2026-06-10、「なし」で削除）", "bot");
@@ -361,7 +372,17 @@ async function handleUserInput(text) {
 
   if (currentState === STATE.TASK_UPDATE_DUE_DATE) {
     currentState = STATE.IDLE;
-    await callChat(`「${flowData.updateTitle}」の期日を${text}に変更して`);
+    setInputEnabled(false);
+    const typing = addTyping();
+    const dueDate = text === "なし" ? null : text;
+    try {
+      await MobileAPI.updateTask({ id: flowData.updateTaskId, due_date: dueDate });
+      typing.remove();
+      addMessage(`「${flowData.updateTitle}」の期日を${text === "なし" ? "未設定" : text}に変更しました`, "bot");
+    } catch (e) {
+      typing.remove();
+      addMessage(e.message, "bot");
+    }
     setInputEnabled(true);
     return;
   }
@@ -442,7 +463,7 @@ userInput().addEventListener("input", () => {
 
 document.getElementById("qa-task").onclick = startTaskFlow;
 document.getElementById("qa-insight").onclick = startInsightFlow;
-document.getElementById("qa-list").onclick = showTaskList;
+document.getElementById("qa-list").onclick = () => MobileNav.switch("tasks");
 document.getElementById("qa-complete").onclick = startCompleteFlow;
 document.getElementById("qa-update-priority").onclick = startUpdatePriorityFlow;
 document.getElementById("qa-update-due").onclick = startUpdateDueFlow;
@@ -513,7 +534,10 @@ async function bootstrap() {
       try {
         await MobileAPI.activateInvite(invite);
         history.replaceState(null, "", location.pathname);
-      } catch (e) { console.warn(e); }
+        showToast("招待を受け付けました");
+      } catch (e) {
+        throw new Error(`招待の有効化に失敗しました: ${e.message}`);
+      }
     }
 
     MobileAPI.me = await MobileAPI.authMe();
