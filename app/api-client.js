@@ -34,6 +34,10 @@ const MobileAPI = {
 
   authMe() { return this.request("/api/auth/me"); },
   activateInvite(code) { return this.request("/api/auth/activate", { method: "POST", body: JSON.stringify({ invite: code }) }); },
+  orgSetup(body) { return this.request("/api/org/setup", { method: "POST", body: JSON.stringify(body) }); },
+  orgTree() { return this.request("/api/org/tree"); },
+  orgInvite(body) { return this.request("/api/org/invite", { method: "POST", body: JSON.stringify(body) }); },
+  orgMembers() { return this.request("/api/org/members"); },
   messages() { return this.request("/api/messages"); },
   chat(message) { return this.request("/api/chat", { method: "POST", body: JSON.stringify({ message }) }); },
   tasks(params = {}) {
@@ -46,6 +50,8 @@ const MobileAPI = {
       body: JSON.stringify({ id, action: "complete", result: result || null }),
     });
   },
+  updateTask(body) { return this.request("/api/tasks", { method: "PATCH", body: JSON.stringify(body) }); },
+  deleteTask(id) { return this.request(`/api/tasks?id=${id}`, { method: "DELETE" }); },
   createTask(body) { return this.request("/api/tasks", { method: "POST", body: JSON.stringify(body) }); },
   suggestCategories(content) {
     return this.request("/api/suggest-categories", { method: "POST", body: JSON.stringify({ content }) });
@@ -53,11 +59,15 @@ const MobileAPI = {
   companies(q) { return this.request(`/api/client-companies${q ? `?q=${encodeURIComponent(q)}` : ""}`); },
   company(id) { return this.request(`/api/client-companies?id=${id}`); },
   createCompany(body) { return this.request("/api/client-companies", { method: "POST", body: JSON.stringify(body) }); },
+  parseCompanyText(content) { return this.request("/api/parse-company", { method: "POST", body: JSON.stringify({ content }) }); },
   updateCompany(id, body) { return this.request(`/api/client-companies?id=${id}`, { method: "PATCH", body: JSON.stringify(body) }); },
+  deleteCompany(id) { return this.request(`/api/client-companies?id=${id}`, { method: "DELETE" }); },
   memos(companyId) { return this.request(`/api/company-memos?companyId=${companyId}`); },
   createMemo(companyId, body) {
     return this.request(`/api/company-memos?companyId=${companyId}`, { method: "POST", body: JSON.stringify(body) });
   },
+  updateMemo(id, body) { return this.request(`/api/company-memos?id=${id}`, { method: "PATCH", body: JSON.stringify(body) }); },
+  deleteMemo(id) { return this.request(`/api/company-memos?id=${id}`, { method: "DELETE" }); },
   jobSeekers(q) { return this.request(`/api/job-seekers${q ? `?q=${encodeURIComponent(q)}` : ""}`); },
   jobSeeker(id) { return this.request(`/api/job-seekers?id=${id}`); },
   createJobSeeker(body) { return this.request("/api/job-seekers", { method: "POST", body: JSON.stringify(body) }); },
@@ -133,4 +143,13 @@ function employmentLabel(s) {
 function driveLink(id) {
   if (!id) return "—";
   return `<a href="https://drive.google.com/file/d/${id}/view" target="_blank" rel="noopener" class="panel-link">Drive</a>`;
+}
+
+function showToast(msg, ms = 3000) {
+  let el = document.getElementById("toast");
+  if (!el) return;
+  el.textContent = msg;
+  el.classList.remove("hidden");
+  clearTimeout(showToast._timer);
+  showToast._timer = setTimeout(() => el.classList.add("hidden"), ms);
 }
