@@ -30,7 +30,7 @@ module.exports = async function handler(req, res) {
     const row = scopedRowData(ctx, {
       content: body.content.trim(),
       tags: body.tags || null,
-    });
+    }, { withOrgUnit: true });
     const { data, error } = await supabase
       .from("t_insights")
       .insert(row)

@@ -75,7 +75,7 @@ module.exports = async function handler(req, res) {
       priority,
       client_company_id: body.client_company_id || null,
       job_seeker_id: body.job_seeker_id || null,
-    });
+    }, { withOrgUnit: true });
     const { data, error } = await supabase.from("t_tasks").insert(row).select(TASK_SELECT).single();
     if (error) return res.status(500).json({ error: error.message });
     const [enriched] = await enrichTasks([data]);

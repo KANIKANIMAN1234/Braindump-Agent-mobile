@@ -220,8 +220,8 @@ module.exports = async function handler(req, res) {
     /* チャット履歴をDBに保存（失敗しても返答は返す） */
     try {
       await supabase.from("t_chat_messages").insert([
-        scopedRowData(ctx, { role: "user", content: message }),
-        scopedRowData(ctx, { role: "bot", content: reply }),
+        scopedRowData(ctx, { role: "user", content: message }, { withOrgUnit: true }),
+        scopedRowData(ctx, { role: "bot", content: reply }, { withOrgUnit: true }),
       ]);
     } catch (saveErr) {
       console.error("履歴保存エラー:", saveErr);
