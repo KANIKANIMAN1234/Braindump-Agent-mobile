@@ -11,11 +11,11 @@ const MobilePanels = {
 
   async render(view) {
     const map = {
-      companies: () => this.renderCompanies(),
-      seekers: () => this.renderSeekers(),
-      tasks: () => this.renderTasks(),
-      insights: () => this.renderInsights(),
-      settings: () => this.renderSettings(),
+      companies: (container) => this.renderCompanies(container),
+      seekers: (container) => this.renderSeekers(container),
+      tasks: (container) => this.renderTasks(container),
+      insights: (container) => this.renderInsights(container),
+      settings: (container) => this.renderSettings(container),
     };
     const el = document.getElementById(`view-${view}`);
     if (!el || !map[view]) return;

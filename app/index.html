@@ -62,6 +62,7 @@
 
     <div id="view-companies" class="mobile-panel hidden"></div>
     <div id="view-seekers" class="mobile-panel hidden"></div>
+    <div id="view-tasks" class="mobile-panel hidden"></div>
     <div id="view-insights" class="mobile-panel hidden"></div>
     <div id="view-settings" class="mobile-panel hidden"></div>
 
@@ -69,10 +70,13 @@
       <button type="button" class="bottom-nav-item active" data-view="chat"><span>💬</span><small>チャット</small></button>
       <button type="button" class="bottom-nav-item" data-view="companies"><span>🏢</span><small>企業</small></button>
       <button type="button" class="bottom-nav-item" data-view="seekers"><span>👤</span><small>転職者</small></button>
+      <button type="button" class="bottom-nav-item" data-view="tasks"><span>✅</span><small>タスク</small></button>
       <button type="button" class="bottom-nav-item" data-view="insights"><span>💡</span><small>気づき</small></button>
       <button type="button" class="bottom-nav-item" data-view="settings"><span>⚙️</span><small>設定</small></button>
     </nav>
   </div>
+
+  <div id="toast" class="mobile-toast hidden"></div>
 
   <div id="org-overlay" class="org-overlay" hidden>
     <div id="org-panel" class="org-panel"></div>
@@ -82,9 +86,9 @@
     <div class="sheet" id="sheet-content"></div>
   </div>
 
-  <script src="api-client.js?v=1"></script>
-  <script src="panels.js?v=1"></script>
-  <script src="org-admin.js?v=1"></script>
-  <script src="main.js?v=1"></script>
+  <script src="api-client.js?v=3"></script>
+  <script src="panels.js?v=3"></script>
+  <script src="org-admin.js?v=3"></script>
+  <script src="main.js?v=3"></script>
 </body>
 </html>
