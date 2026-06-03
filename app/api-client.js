@@ -60,6 +60,7 @@ const MobileAPI = {
   company(id) { return this.request(`/api/client-companies?id=${id}`); },
   createCompany(body) { return this.request("/api/client-companies", { method: "POST", body: JSON.stringify(body) }); },
   parseCompanyText(content) { return this.request("/api/parse-company", { method: "POST", body: JSON.stringify({ content }) }); },
+  parseCompanyContacts(body) { return this.request("/api/parse-company-contacts", { method: "POST", body: JSON.stringify(body) }); },
   jobPostings(companyId) { return this.request(`/api/job-postings?client_company_id=${companyId}`); },
   jobPosting(id) { return this.request(`/api/job-postings?id=${id}`); },
   createJobPosting(body) { return this.request("/api/job-postings", { method: "POST", body: JSON.stringify(body) }); },

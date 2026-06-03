@@ -858,6 +858,22 @@ body {
 
 .hidden { display: none !important; }
 
+.mobile-toast {
+  position: fixed;
+  bottom: calc(4.5rem + env(safe-area-inset-bottom, 0));
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--dulton-navy);
+  color: var(--white);
+  padding: 10px 16px;
+  font-size: 12px;
+  line-height: 1.6;
+  z-index: 12000;
+  max-width: calc(100% - 2rem);
+  text-align: center;
+  border: 1px solid var(--border);
+}
+
 .mobile-loading {
   position: fixed;
   inset: 0;
@@ -918,12 +934,12 @@ body {
   flex: 1;
   border: none;
   background: none;
-  padding: 0.45rem 0.25rem 0.35rem;
+  padding: 0.35rem 0.15rem 0.3rem;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.15rem;
-  font-size: 10px;
+  gap: 0.1rem;
+  font-size: 9px;
   font-family: var(--font-jp);
   font-weight: 400;
   color: rgba(255, 255, 255, 0.65);
@@ -974,6 +990,12 @@ body {
   line-height: 1.5;
   color: var(--dulton-navy);
   text-transform: uppercase;
+}
+
+.panel-header-actions {
+  display: flex;
+  gap: 0.35rem;
+  flex-shrink: 0;
 }
 
 .panel-btn {
@@ -1194,4 +1216,19 @@ body {
   color: var(--gray-dark);
   margin: 0.35rem 0;
   line-height: 1.5;
+}
+
+.contact-import-box {
+  border: 1px solid var(--border);
+  background: var(--surface-blue);
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+}
+
+.contact-import-box strong {
+  display: block;
+  font-size: 12px;
+  color: var(--dulton-navy);
+  margin-bottom: 4px;
 }

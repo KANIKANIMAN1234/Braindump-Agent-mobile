@@ -62,12 +62,85 @@ const MobilePanels = {
     await load("");
   },
 
+  companyContactImportSection() {
+    return `
+      <div class="contact-import-box">
+        <strong>担当者情報の取り込み</strong>
+        <p class="hint">名刺写真またはメール署名を貼り付け/アップロードすると、AI が人事・採用部署・窓口に自動振分けします。</p>
+        <label class="field"><span>メール署名・担当者テキスト</span>
+          <textarea id="contact-import-text" rows="3" placeholder="メール署名をコピペ"></textarea>
+        </label>
+        <label class="field"><span>名刺写真</span>
+          <input type="file" id="contact-import-file" accept="image/jpeg,image/png,image/webp,image/gif" />
+        </label>
+        <button type="button" class="panel-btn primary" id="contact-import-btn" style="margin-bottom:8px">AIで反映</button>
+        <div id="contact-import-status" class="hint"></div>
+      </div>`;
+  },
+
+  applyContactsToForm(formRoot, contacts) {
+    [
+      "hr_name", "hr_phone", "hr_email",
+      "dept_manager_name", "dept_manager_phone", "dept_manager_email",
+      "window_contact_name", "window_contact_phone", "window_contact_email",
+    ].forEach((f) => {
+      if (contacts[f]) {
+        const el = formRoot.querySelector(`[name="${f}"]`);
+        if (el) el.value = contacts[f];
+      }
+    });
+  },
+
+  wireCompanyContactImport(formRoot) {
+    const btn = formRoot.querySelector("#contact-import-btn");
+    const statusEl = formRoot.querySelector("#contact-import-status");
+    if (!btn) return;
+
+    btn.onclick = async () => {
+      const text = formRoot.querySelector("#contact-import-text")?.value?.trim() || "";
+      const file = formRoot.querySelector("#contact-import-file")?.files?.[0];
+      if (!text && !file) {
+        showToast("署名テキストまたは名刺画像を指定してください");
+        return;
+      }
+      btn.disabled = true;
+      btn.textContent = "解析中…";
+      if (statusEl) statusEl.textContent = "";
+      try {
+        let data;
+        if (file) {
+          const base64 = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result.split(",")[1]);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+          });
+          data = await MobileAPI.parseCompanyContacts({ imageBase64: base64, mimeType: file.type || "image/jpeg" });
+        } else {
+          data = await MobileAPI.parseCompanyContacts({ content: text });
+        }
+        this.applyContactsToForm(formRoot, data.contacts || {});
+        if (statusEl) {
+          statusEl.textContent = data.summary ? `✓ ${data.summary}` : "✓ 反映しました（保存で確定）";
+        }
+        showToast("担当者情報を反映しました");
+      } catch (e) {
+        if (statusEl) statusEl.textContent = "";
+        alert(e.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "AIで反映";
+      }
+    };
+  },
+
   companyFormHtml(c = {}) {
     return `
       <div class="sheet-title">${c.id ? "企業を編集" : "企業を登録"}</div>
       <label class="field"><span>企業名 *</span><input name="name" value="${escapeHtml(c.name || "")}" required /></label>
       <label class="field"><span>企業文化</span><textarea name="company_culture">${escapeHtml(c.company_culture || "")}</textarea></label>
       <label class="field"><span>内部メモ</span><textarea name="internal_notes">${escapeHtml(c.internal_notes || "")}</textarea></label>
+      ${this.companyContactImportSection()}
       <label class="field"><span>人事担当</span><input name="hr_name" value="${escapeHtml(c.hr_name || "")}" /></label>
       <label class="field"><span>人事 TEL / メール</span>
         <input name="hr_phone" placeholder="TEL" value="${escapeHtml(c.hr_phone || "")}" />
@@ -97,6 +170,8 @@ const MobilePanels = {
       delete c.postings;
     }
     showSheet(this.companyFormHtml(c));
+    const sheet = document.getElementById("sheet-content");
+    this.wireCompanyContactImport(sheet);
     if (id) {
       document.getElementById("del-company").onclick = async () => {
         if (!confirm("この採用企業を削除しますか？")) return;
