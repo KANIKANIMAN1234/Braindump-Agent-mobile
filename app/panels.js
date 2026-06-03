@@ -331,10 +331,13 @@ const MobilePanels = {
   },
 
   async showPostingForm(companyId, postingId) {
-    let p = { title: "", job_posting: "", status: "active" };
-    if (postingId) p = (await MobileAPI.jobPosting(postingId)).posting;
+    if (!postingId) {
+      this.showPostingPasteForm(companyId);
+      return;
+    }
+    let p = (await MobileAPI.jobPosting(postingId)).posting;
     showSheet(`
-      <div class="sheet-title">${postingId ? "ポジション編集" : "ポジション追加"}</div>
+      <div class="sheet-title">ポジション編集</div>
       <label class="field"><span>ポジション名 *</span><input name="title" value="${escapeHtml(p.title || "")}" required /></label>
       <label class="field"><span>採用募集要項</span><textarea name="job_posting">${escapeHtml(p.job_posting || "")}</textarea></label>
       <label class="field"><span>状態</span>
@@ -345,22 +348,20 @@ const MobilePanels = {
         </select>
       </label>
       <div class="sheet-actions">
-        ${postingId ? `<button type="button" class="panel-btn danger" id="del-posting">削除</button>` : ""}
+        <button type="button" class="panel-btn danger" id="del-posting">削除</button>
         <button type="button" class="panel-btn" onclick="closeSheet()">キャンセル</button>
         <button type="button" class="panel-btn primary" id="save-posting">保存</button>
       </div>
     `);
-    if (postingId) {
-      document.getElementById("del-posting").onclick = async () => {
-        if (!confirm("この募集ポジションを削除しますか？")) return;
-        try {
-          await MobileAPI.deleteJobPosting(postingId);
-          closeSheet();
-          showToast("削除しました");
-          this.showCompanyDetail(companyId);
-        } catch (e) { alert(e.message); }
-      };
-    }
+    document.getElementById("del-posting").onclick = async () => {
+      if (!confirm("この募集ポジションを削除しますか？")) return;
+      try {
+        await MobileAPI.deleteJobPosting(postingId);
+        closeSheet();
+        showToast("削除しました");
+        this.showCompanyDetail(companyId);
+      } catch (e) { alert(e.message); }
+    };
     document.getElementById("save-posting").onclick = async () => {
       const sheet = document.getElementById("sheet-content");
       const body = {
@@ -369,8 +370,161 @@ const MobilePanels = {
         status: sheet.querySelector("[name=status]").value,
       };
       try {
-        if (postingId) await MobileAPI.updateJobPosting(postingId, body);
-        else await MobileAPI.createJobPosting({ ...body, client_company_id: companyId });
+        await MobileAPI.updateJobPosting(postingId, body);
+        closeSheet();
+        showToast("保存しました");
+        this.showCompanyDetail(companyId);
+      } catch (e) { alert(e.message); }
+    };
+  },
+
+  showPostingPasteForm(companyId) {
+    let parsedFlat = [];
+    showSheet(`
+      <div class="sheet-title">ポジション追加</div>
+      <p class="hint">採用募集要項を貼り付けると、AI がポジション名・要項を抽出して登録します。</p>
+      <label class="field"><span>採用募集要項</span>
+        <textarea id="posting-source" rows="10" placeholder="求人票・募集要項・メール本文など"></textarea>
+      </label>
+      <button type="button" class="panel-btn primary" id="posting-parse" style="margin-bottom:12px">AIで解析して登録</button>
+      <div id="posting-preview"></div>
+      <div class="sheet-actions">
+        <button type="button" class="panel-btn" onclick="closeSheet()">キャンセル</button>
+        <button type="button" class="panel-btn" id="posting-manual">手入力</button>
+        <button type="button" class="panel-btn primary" id="posting-save" disabled>0件を登録</button>
+      </div>
+    `);
+
+    const previewEl = () => document.getElementById("posting-preview");
+    const saveBtn = document.getElementById("posting-save");
+
+    function flatFromEntries(entries) {
+      const rows = [];
+      (entries || []).forEach((entry, ei) => {
+        (entry.positions || []).forEach((pos, pi) => rows.push({ ei, pi, pos }));
+      });
+      return rows;
+    }
+
+    function updateSaveLabel() {
+      const n = previewEl().querySelectorAll(".posting-pos-check:checked").length;
+      saveBtn.disabled = n === 0;
+      saveBtn.textContent = `${n}件を登録`;
+    }
+
+    function renderPreview(flat) {
+      parsedFlat = flat;
+      if (!flat.length) {
+        previewEl().innerHTML = "";
+        saveBtn.disabled = true;
+        saveBtn.textContent = "0件を登録";
+        return;
+      }
+      previewEl().innerHTML = `
+        <p class="hint" style="margin-bottom:8px">解析結果: ${flat.length}ポジション</p>
+        ${flat.map((row, i) => `
+          <div class="panel-card static" style="margin-bottom:8px">
+            <label style="display:flex;gap:8px;align-items:flex-start">
+              <input type="checkbox" class="posting-pos-check" data-idx="${i}" checked style="margin-top:4px" />
+              <span><strong>${escapeHtml(row.pos.title)}</strong><br>
+              <small>${escapeHtml((row.pos.job_posting || "—").slice(0, 80))}${(row.pos.job_posting || "").length > 80 ? "…" : ""}</small></span>
+            </label>
+          </div>`).join("")}`;
+      previewEl().querySelectorAll(".posting-pos-check").forEach((cb) => {
+        cb.addEventListener("change", updateSaveLabel);
+      });
+      updateSaveLabel();
+    }
+
+    async function registerPositions(indices) {
+      saveBtn.disabled = true;
+      let ok = 0;
+      try {
+        for (const i of indices) {
+          const row = parsedFlat[i];
+          if (!row?.pos) continue;
+          await MobileAPI.createJobPosting({
+            client_company_id: companyId,
+            title: row.pos.title,
+            job_posting: row.pos.job_posting,
+          });
+          ok++;
+        }
+        closeSheet();
+        showToast(`${ok}件のポジションを登録しました`);
+        this.showCompanyDetail(companyId);
+      } catch (e) {
+        alert(e.message);
+        saveBtn.disabled = false;
+      }
+    }
+
+    document.getElementById("posting-manual").onclick = () => {
+      closeSheet();
+      this.showPostingManualForm(companyId);
+    };
+
+    document.getElementById("posting-parse").onclick = async () => {
+      const content = document.getElementById("posting-source").value.trim();
+      if (!content) { showToast("テキストを貼り付けてください"); return; }
+      const btn = document.getElementById("posting-parse");
+      btn.disabled = true;
+      btn.textContent = "解析中…";
+      try {
+        const data = await MobileAPI.parseCompanyText(content);
+        const flat = flatFromEntries(data.entries);
+        if (!flat.length) {
+          alert("ポジションを抽出できませんでした");
+          return;
+        }
+        if (flat.length === 1) {
+          await registerPositions.call(this, [0]);
+          return;
+        }
+        renderPreview(flat);
+        showToast(`${flat.length}ポジションを抽出しました`);
+      } catch (e) {
+        alert(e.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "AIで解析して登録";
+      }
+    };
+
+    saveBtn.onclick = async () => {
+      const indices = [...previewEl().querySelectorAll(".posting-pos-check:checked")].map((cb) => Number(cb.dataset.idx));
+      if (!indices.length) return;
+      await registerPositions.call(this, indices);
+    };
+  },
+
+  showPostingManualForm(companyId) {
+    showSheet(`
+      <div class="sheet-title">ポジション追加（手入力）</div>
+      <label class="field"><span>ポジション名 *</span><input name="title" required /></label>
+      <label class="field"><span>採用募集要項</span><textarea name="job_posting"></textarea></label>
+      <label class="field"><span>状態</span>
+        <select name="status">
+          <option value="active" selected>active</option>
+          <option value="draft">draft</option>
+          <option value="closed">closed</option>
+        </select>
+      </label>
+      <div class="sheet-actions">
+        <button type="button" class="panel-btn" onclick="closeSheet()">キャンセル</button>
+        <button type="button" class="panel-btn primary" id="save-posting">保存</button>
+      </div>
+    `);
+    document.getElementById("save-posting").onclick = async () => {
+      const sheet = document.getElementById("sheet-content");
+      const body = {
+        title: sheet.querySelector("[name=title]").value,
+        job_posting: sheet.querySelector("[name=job_posting]").value,
+        status: sheet.querySelector("[name=status]").value,
+      };
+      if (!body.title.trim()) { showToast("ポジション名を入力してください"); return; }
+      try {
+        await MobileAPI.createJobPosting({ ...body, client_company_id: companyId });
         closeSheet();
         showToast("保存しました");
         this.showCompanyDetail(companyId);
