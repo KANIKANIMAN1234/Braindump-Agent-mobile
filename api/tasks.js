@@ -4,7 +4,7 @@ const { applyTasksScope, scopedRowData } = require("../lib/data-scope");
 const { handleOptions } = require("../lib/cors");
 
 const TASK_SELECT =
-  "id, title, due_date, priority, completed, result, client_company_id, job_seeker_id, member_id, created_at";
+  "id, title, due_date, priority, completed, result, client_company_id, job_posting_id, job_seeker_id, member_id, created_at";
 
 module.exports = async function handler(req, res) {
   if (handleOptions(req, res)) return;
@@ -23,22 +23,39 @@ module.exports = async function handler(req, res) {
   async function enrichTasks(tasks) {
     if (!tasks?.length) return [];
     const companyIds = [...new Set(tasks.map((t) => t.client_company_id).filter(Boolean))];
+    const postingIds = [...new Set(tasks.map((t) => t.job_posting_id).filter(Boolean))];
     const seekerIds = [...new Set(tasks.map((t) => t.job_seeker_id).filter(Boolean))];
     let companyMap = {};
+    let postingMap = {};
     let seekerMap = {};
     if (companyIds.length) {
       const { data } = await supabase.from("m_client_companies").select("id, name").in("id", companyIds);
       (data || []).forEach((c) => { companyMap[c.id] = c.name; });
     }
+    if (postingIds.length) {
+      const { data } = await supabase.from("t_job_postings").select("id, title, client_company_id").in("id", postingIds);
+      (data || []).forEach((p) => {
+        postingMap[p.id] = { title: p.title, companyId: p.client_company_id };
+      });
+    }
     if (seekerIds.length) {
       const { data } = await supabase.from("m_job_seekers").select("id, name").in("id", seekerIds);
       (data || []).forEach((s) => { seekerMap[s.id] = s.name; });
     }
-    return tasks.map((t) => ({
-      ...t,
-      company_name: t.client_company_id ? companyMap[t.client_company_id] || "—" : null,
-      job_seeker_name: t.job_seeker_id ? seekerMap[t.job_seeker_id] || "—" : null,
-    }));
+    return tasks.map((t) => {
+      const posting = t.job_posting_id ? postingMap[t.job_posting_id] : null;
+      const companyName = t.client_company_id
+        ? companyMap[t.client_company_id] || "—"
+        : posting
+          ? companyMap[posting.companyId] || "—"
+          : null;
+      return {
+        ...t,
+        company_name: companyName,
+        posting_title: posting?.title || null,
+        job_seeker_name: t.job_seeker_id ? seekerMap[t.job_seeker_id] || "—" : null,
+      };
+    });
   }
 
   if (req.method === "GET") {
@@ -74,8 +91,17 @@ module.exports = async function handler(req, res) {
       due_date: body.due_date || null,
       priority,
       client_company_id: body.client_company_id || null,
+      job_posting_id: body.job_posting_id || null,
       job_seeker_id: body.job_seeker_id || null,
     }, { withOrgUnit: true });
+    if (body.job_posting_id && !body.client_company_id) {
+      const { data: posting } = await supabase
+        .from("t_job_postings")
+        .select("client_company_id")
+        .eq("id", body.job_posting_id)
+        .maybeSingle();
+      if (posting) row.client_company_id = posting.client_company_id;
+    }
     const { data, error } = await supabase.from("t_tasks").insert(row).select(TASK_SELECT).single();
     if (error) return res.status(500).json({ error: error.message });
     const [enriched] = await enrichTasks([data]);
@@ -107,6 +133,17 @@ module.exports = async function handler(req, res) {
       }
       if (title !== undefined) updateData.title = title;
       if (body.client_company_id !== undefined) updateData.client_company_id = body.client_company_id || null;
+      if (body.job_posting_id !== undefined) {
+        updateData.job_posting_id = body.job_posting_id || null;
+        if (body.job_posting_id && body.client_company_id === undefined) {
+          const { data: posting } = await supabase
+            .from("t_job_postings")
+            .select("client_company_id")
+            .eq("id", body.job_posting_id)
+            .maybeSingle();
+          if (posting) updateData.client_company_id = posting.client_company_id;
+        }
+      }
       if (body.job_seeker_id !== undefined) updateData.job_seeker_id = body.job_seeker_id || null;
     }
 

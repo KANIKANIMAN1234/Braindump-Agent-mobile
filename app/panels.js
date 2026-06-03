@@ -49,7 +49,7 @@ const MobilePanels = {
       list.innerHTML = companies.map((c) => `
         <button type="button" class="panel-card" data-id="${c.id}">
           <strong>${escapeHtml(c.name)}</strong>
-          <small>${(c.updated_at || c.created_at || "").slice(0, 10)}</small>
+          <small>ポジション ${c.active_posting_count ?? c.posting_count ?? 0}件 · ${(c.updated_at || c.created_at || "").slice(0, 10)}</small>
         </button>`).join("");
       list.querySelectorAll(".panel-card").forEach((btn) => {
         btn.addEventListener("click", () => this.showCompanyDetail(btn.dataset.id));
@@ -66,7 +66,6 @@ const MobilePanels = {
     return `
       <div class="sheet-title">${c.id ? "企業を編集" : "企業を登録"}</div>
       <label class="field"><span>企業名 *</span><input name="name" value="${escapeHtml(c.name || "")}" required /></label>
-      <label class="field"><span>採用募集要項</span><textarea name="job_posting">${escapeHtml(c.job_posting || "")}</textarea></label>
       <label class="field"><span>企業文化</span><textarea name="company_culture">${escapeHtml(c.company_culture || "")}</textarea></label>
       <label class="field"><span>内部メモ</span><textarea name="internal_notes">${escapeHtml(c.internal_notes || "")}</textarea></label>
       <label class="field"><span>人事担当</span><input name="hr_name" value="${escapeHtml(c.hr_name || "")}" /></label>
@@ -93,7 +92,10 @@ const MobilePanels = {
 
   async showCompanyForm(id, reload, preset = null) {
     let c = preset || {};
-    if (id) c = (await MobileAPI.company(id)).company;
+    if (id) {
+      c = (await MobileAPI.company(id)).company;
+      delete c.postings;
+    }
     showSheet(this.companyFormHtml(c));
     if (id) {
       document.getElementById("del-company").onclick = async () => {
@@ -121,10 +123,10 @@ const MobilePanels = {
   },
 
   showCompanyBulkImport(reload) {
-    let parsedPositions = [];
+    let parsedEntries = [];
     showSheet(`
       <div class="sheet-title">テキストから一括登録</div>
-      <p class="hint">複数ポジションがある場合は、AI が<strong>1ポジション=1レコード</strong>に分割します。</p>
+      <p class="hint">AI が<strong>企業マスタ</strong>と<strong>募集ポジション</strong>に分割します。</p>
       <label class="field"><span>原文テキスト</span>
         <textarea id="bulk-source" rows="8" placeholder="採用募集要項・求人票など"></textarea>
       </label>
@@ -132,39 +134,59 @@ const MobilePanels = {
       <div id="bulk-preview"></div>
       <div class="sheet-actions">
         <button type="button" class="panel-btn" onclick="closeSheet()">キャンセル</button>
-        <button type="button" class="panel-btn primary" id="bulk-save" disabled>0件を登録</button>
+        <button type="button" class="panel-btn primary" id="bulk-save" disabled>0件のポジションを登録</button>
       </div>
     `);
 
     const saveBtn = document.getElementById("bulk-save");
     const previewEl = () => document.getElementById("bulk-preview");
 
+    function flatPositions() {
+      const rows = [];
+      parsedEntries.forEach((entry, ei) => {
+        (entry.positions || []).forEach((pos, pi) => rows.push({ ei, pi, entry, pos }));
+      });
+      return rows;
+    }
+
+    function updateSaveLabel() {
+      const n = previewEl().querySelectorAll(".bulk-pos-check:checked").length;
+      saveBtn.disabled = n === 0;
+      saveBtn.textContent = `${n}件のポジションを登録`;
+    }
+
     function renderPreview() {
-      if (!parsedPositions.length) {
+      const flat = flatPositions();
+      if (!flat.length) {
         previewEl().innerHTML = "";
         saveBtn.disabled = true;
-        saveBtn.textContent = "0件を登録";
+        saveBtn.textContent = "0件のポジションを登録";
         return;
       }
       previewEl().innerHTML = `
-        <p class="hint" style="margin-bottom:8px">解析結果: ${parsedPositions.length}件</p>
-        ${parsedPositions.map((p, i) => `
+        <p class="hint" style="margin-bottom:8px">解析結果: ${parsedEntries.length}社 / ${flat.length}ポジション</p>
+        ${parsedEntries.map((entry, ei) => `
           <div class="panel-card static" style="margin-bottom:8px">
-            <label style="display:flex;gap:8px;align-items:flex-start">
-              <input type="checkbox" class="bulk-check" data-idx="${i}" checked style="margin-top:4px" />
-              <span><strong>${escapeHtml(p.name)}</strong><br>
-              <small>${escapeHtml((p.job_posting || "—").slice(0, 80))}${(p.job_posting || "").length > 80 ? "…" : ""}</small></span>
-            </label>
+            <strong>${escapeHtml(entry.company.name)}</strong>
+            ${(entry.positions || []).map((pos, pi) => `
+              <label style="display:flex;gap:8px;align-items:flex-start;margin-top:6px">
+                <input type="checkbox" class="bulk-pos-check" data-ei="${ei}" data-pi="${pi}" checked style="margin-top:4px" />
+                <span><strong>${escapeHtml(pos.title)}</strong><br>
+                <small>${escapeHtml((pos.job_posting || "—").slice(0, 80))}${(pos.job_posting || "").length > 80 ? "…" : ""}</small></span>
+              </label>`).join("")}
           </div>`).join("")}`;
-      saveBtn.disabled = false;
-      saveBtn.textContent = `${parsedPositions.length}件を登録`;
-      previewEl().querySelectorAll(".bulk-check").forEach((cb) => {
-        cb.addEventListener("change", () => {
-          const n = previewEl().querySelectorAll(".bulk-check:checked").length;
-          saveBtn.disabled = n === 0;
-          saveBtn.textContent = `${n}件を登録`;
-        });
+      previewEl().querySelectorAll(".bulk-pos-check").forEach((cb) => {
+        cb.addEventListener("change", updateSaveLabel);
       });
+      updateSaveLabel();
+    }
+
+    async function findOrCreateCompany(companyData) {
+      const { companies } = await MobileAPI.companies(companyData.name);
+      const exact = (companies || []).find((c) => c.name === companyData.name);
+      if (exact) return exact.id;
+      const { company } = await MobileAPI.createCompany(companyData);
+      return company.id;
     }
 
     document.getElementById("bulk-parse").onclick = async () => {
@@ -175,9 +197,9 @@ const MobilePanels = {
       btn.textContent = "解析中…";
       try {
         const data = await MobileAPI.parseCompanyText(content);
-        parsedPositions = data.positions || [];
+        parsedEntries = data.entries || [];
         renderPreview();
-        showToast(`${parsedPositions.length}件を抽出`);
+        showToast(`${data.entryCount || parsedEntries.length}社・${data.positionCount || flatPositions().length}ポジションを抽出`);
       } catch (e) { alert(e.message); }
       finally {
         btn.disabled = false;
@@ -185,13 +207,30 @@ const MobilePanels = {
       }
     };
     saveBtn.onclick = async () => {
-      const indices = [...previewEl().querySelectorAll(".bulk-check:checked")].map((cb) => Number(cb.dataset.idx));
-      if (!indices.length) return;
+      const checks = [...previewEl().querySelectorAll(".bulk-pos-check:checked")];
+      if (!checks.length) return;
       saveBtn.disabled = true;
+      const companyCache = {};
+      let ok = 0;
       try {
-        for (const i of indices) await MobileAPI.createCompany(parsedPositions[i]);
+        for (const cb of checks) {
+          const ei = Number(cb.dataset.ei);
+          const pi = Number(cb.dataset.pi);
+          const entry = parsedEntries[ei];
+          const pos = entry?.positions?.[pi];
+          if (!entry || !pos) continue;
+          if (!companyCache[entry.company.name]) {
+            companyCache[entry.company.name] = await findOrCreateCompany(entry.company);
+          }
+          await MobileAPI.createJobPosting({
+            client_company_id: companyCache[entry.company.name],
+            title: pos.title,
+            job_posting: pos.job_posting,
+          });
+          ok++;
+        }
         closeSheet();
-        showToast(`${indices.length}件を登録しました`);
+        showToast(`${ok}件のポジションを登録しました`);
         reload("");
       } catch (e) {
         alert(e.message);
@@ -202,15 +241,27 @@ const MobilePanels = {
 
   async showCompanyDetail(id) {
     const [{ company }, { memos }] = await Promise.all([MobileAPI.company(id), MobileAPI.memos(id)]);
+    const postings = company.postings || [];
     showSheet(`
       <div class="sheet-title">${escapeHtml(company.name)}</div>
-      <div class="detail-block"><strong>募集要項</strong><p>${escapeHtml(company.job_posting || "—")}</p></div>
       <div class="detail-block"><strong>企業文化</strong><p>${escapeHtml(company.company_culture || "—")}</p></div>
+      <div class="detail-block"><strong>内部メモ</strong><p>${escapeHtml(company.internal_notes || "—")}</p></div>
       <div class="detail-grid">
         <div><small>人事</small><br>${escapeHtml(company.hr_name || "—")}</div>
         <div><small>人事連絡</small><br>${escapeHtml(company.hr_phone || "—")}<br>${escapeHtml(company.hr_email || "—")}</div>
         <div><small>部署責任者</small><br>${escapeHtml(company.dept_manager_name || "—")}</div>
         <div><small>窓口</small><br>${escapeHtml(company.window_contact_name || "—")}</div>
+      </div>
+      <div class="detail-block">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <strong>募集ポジション (${postings.length})</strong>
+          <button type="button" class="panel-btn" id="btn-add-posting">＋ 追加</button>
+        </div>
+        ${postings.length ? postings.map((p) => `
+          <button type="button" class="panel-card" data-posting-id="${p.id}" style="width:100%;margin-bottom:6px;text-align:left">
+            <strong>${escapeHtml(p.title)}</strong>
+            <small>${escapeHtml(p.status || "active")}</small>
+          </button>`).join("") : "<p>—</p>"}
       </div>
       <div class="detail-block"><strong>メモ (${memos.length})</strong>
         ${memos.map((m) => `
@@ -232,6 +283,16 @@ const MobilePanels = {
         <button type="button" class="panel-btn primary" id="add-memo">メモ保存</button>
       </div>
     `);
+    document.getElementById("btn-add-posting").onclick = () => {
+      closeSheet();
+      this.showPostingForm(id);
+    };
+    document.querySelectorAll("[data-posting-id]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        closeSheet();
+        this.showPostingDetail(id, btn.dataset.postingId);
+      });
+    });
     document.getElementById("del-co").onclick = async () => {
       if (!confirm("この採用企業を削除しますか？")) return;
       try {
@@ -266,6 +327,71 @@ const MobilePanels = {
         closeSheet();
         this.showCompanyDetail(id);
       } catch (e) { alert(e.message); }
+    };
+  },
+
+  async showPostingForm(companyId, postingId) {
+    let p = { title: "", job_posting: "", status: "active" };
+    if (postingId) p = (await MobileAPI.jobPosting(postingId)).posting;
+    showSheet(`
+      <div class="sheet-title">${postingId ? "ポジション編集" : "ポジション追加"}</div>
+      <label class="field"><span>ポジション名 *</span><input name="title" value="${escapeHtml(p.title || "")}" required /></label>
+      <label class="field"><span>採用募集要項</span><textarea name="job_posting">${escapeHtml(p.job_posting || "")}</textarea></label>
+      <label class="field"><span>状態</span>
+        <select name="status">
+          <option value="active" ${p.status === "active" ? "selected" : ""}>active</option>
+          <option value="draft" ${p.status === "draft" ? "selected" : ""}>draft</option>
+          <option value="closed" ${p.status === "closed" ? "selected" : ""}>closed</option>
+        </select>
+      </label>
+      <div class="sheet-actions">
+        ${postingId ? `<button type="button" class="panel-btn danger" id="del-posting">削除</button>` : ""}
+        <button type="button" class="panel-btn" onclick="closeSheet()">キャンセル</button>
+        <button type="button" class="panel-btn primary" id="save-posting">保存</button>
+      </div>
+    `);
+    if (postingId) {
+      document.getElementById("del-posting").onclick = async () => {
+        if (!confirm("この募集ポジションを削除しますか？")) return;
+        try {
+          await MobileAPI.deleteJobPosting(postingId);
+          closeSheet();
+          showToast("削除しました");
+          this.showCompanyDetail(companyId);
+        } catch (e) { alert(e.message); }
+      };
+    }
+    document.getElementById("save-posting").onclick = async () => {
+      const sheet = document.getElementById("sheet-content");
+      const body = {
+        title: sheet.querySelector("[name=title]").value,
+        job_posting: sheet.querySelector("[name=job_posting]").value,
+        status: sheet.querySelector("[name=status]").value,
+      };
+      try {
+        if (postingId) await MobileAPI.updateJobPosting(postingId, body);
+        else await MobileAPI.createJobPosting({ ...body, client_company_id: companyId });
+        closeSheet();
+        showToast("保存しました");
+        this.showCompanyDetail(companyId);
+      } catch (e) { alert(e.message); }
+    };
+  },
+
+  async showPostingDetail(companyId, postingId) {
+    const { posting } = await MobileAPI.jobPosting(postingId);
+    showSheet(`
+      <div class="sheet-title">${escapeHtml(posting.title)}</div>
+      <div class="detail-block"><strong>状態</strong> ${escapeHtml(posting.status || "active")}</div>
+      <div class="detail-block"><strong>採用募集要項</strong><p style="white-space:pre-wrap">${escapeHtml(posting.job_posting || "—")}</p></div>
+      <div class="sheet-actions">
+        <button type="button" class="panel-btn" onclick="closeSheet()">閉じる</button>
+        <button type="button" class="panel-btn primary" id="edit-posting">編集</button>
+      </div>
+    `);
+    document.getElementById("edit-posting").onclick = () => {
+      closeSheet();
+      this.showPostingForm(companyId, postingId);
     };
   },
 
