@@ -1232,3 +1232,41 @@ body {
   color: var(--dulton-navy);
   margin-bottom: 4px;
 }
+
+.field-with-mic {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+}
+
+.field-with-mic input,
+.field-with-mic textarea {
+  flex: 1;
+  min-width: 0;
+}
+
+.field-mic-btn {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--white);
+  color: var(--gray-dark);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 2px;
+}
+
+.field-mic-btn.recording {
+  background: var(--dulton-red);
+  border-color: var(--dulton-red);
+  color: var(--white);
+}
+
+.field-mic-btn:disabled {
+  opacity: 0.6;
+}

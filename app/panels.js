@@ -657,9 +657,9 @@ const MobilePanels = {
     return `
       <div class="contact-import-box">
         <strong>転職者情報の取り込み</strong>
-        <p class="hint">職務経歴書要約・面談メモ等を貼り付けると、AI が各項目へ自動反映します。</p>
+        <p class="hint">職務経歴書要約・面談メモ等を貼り付けるか、🎤 で音声入力すると、AI が各項目へ自動反映します。</p>
         <label class="field"><span>転職者情報テキスト</span>
-          <textarea id="seeker-import-text" rows="5" placeholder="氏名・年齢・年収・現職・希望条件など"></textarea>
+          <textarea id="seeker-import-text" rows="5" placeholder="氏名・年齢・年収・現職・希望条件など（右の🎤で音声入力可）"></textarea>
         </label>
         <button type="button" class="panel-btn primary" id="seeker-import-btn" style="margin-bottom:8px">AIで反映</button>
         <div id="seeker-import-status" class="hint"></div>
@@ -751,6 +751,7 @@ const MobilePanels = {
     showSheet(this.seekerFormHtml(j));
     const sheet = document.getElementById("sheet-content");
     this.wireSeekerImport(sheet);
+    VoiceInput.wireSeekerForm(sheet, (blob) => MobileAPI.transcribe(blob));
     if (id) {
       document.getElementById("del-seeker").onclick = async () => {
         if (!confirm("削除しますか？")) return;
