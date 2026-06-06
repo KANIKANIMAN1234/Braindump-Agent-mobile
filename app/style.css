@@ -1100,6 +1100,35 @@ body {
 
 .panel-card:hover { border-color: var(--dulton-navy); }
 
+.panel-card--company {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+}
+
+.panel-card--company .panel-card-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.4;
+  color: var(--text-dark);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.panel-card--company .panel-card-meta {
+  flex-shrink: 0;
+  color: var(--gray-dark);
+  font-size: 10px;
+  line-height: 1.4;
+  white-space: nowrap;
+  text-align: right;
+}
+
 .panel-card.static { cursor: default; }
 
 .panel-card strong {

@@ -47,9 +47,9 @@ const MobilePanels = {
         return;
       }
       list.innerHTML = companies.map((c) => `
-        <button type="button" class="panel-card" data-id="${c.id}">
-          <strong>${escapeHtml(c.name)}</strong>
-          <small>ポジション ${c.active_posting_count ?? c.posting_count ?? 0}件 · ${(c.updated_at || c.created_at || "").slice(0, 10)}</small>
+        <button type="button" class="panel-card panel-card--company" data-id="${c.id}">
+          <span class="panel-card-title">${escapeHtml(c.name)}</span>
+          <small class="panel-card-meta">ポジション ${c.active_posting_count ?? c.posting_count ?? 0}件 · ${(c.updated_at || c.created_at || "").slice(0, 10)}</small>
         </button>`).join("");
       list.querySelectorAll(".panel-card").forEach((btn) => {
         btn.addEventListener("click", () => this.showCompanyDetail(btn.dataset.id));
