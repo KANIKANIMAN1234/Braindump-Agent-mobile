@@ -921,8 +921,7 @@ const MobilePanels = {
   async renderInsights(el) {
     el.innerHTML =
       this.panelHeader("気づき", `
-        <button type="button" class="panel-btn" id="btn-add-insight">＋ 追加</button>
-        <button type="button" class="panel-btn" id="btn-export-ins">📤 出力</button>`) +
+        <button type="button" class="panel-btn" id="btn-add-insight">＋ 追加</button>`) +
       `<div id="insight-list" class="panel-list"></div>`;
 
     const load = async () => {
@@ -963,13 +962,6 @@ const MobilePanels = {
           load();
         } catch (e) { alert(e.message); }
       };
-    };
-    document.getElementById("btn-export-ins").onclick = async () => {
-      try {
-        const res = await MobileAPI.exportInsights();
-        alert(res.message || `${res.count || 0}件を Google Drive に出力しました`);
-        load();
-      } catch (e) { alert(e.message); }
     };
     await load();
   },

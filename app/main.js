@@ -481,18 +481,6 @@ document.getElementById("qa-list").onclick = () => MobileNav.switch("tasks");
 document.getElementById("qa-complete").onclick = startCompleteFlow;
 document.getElementById("qa-update-priority").onclick = startUpdatePriorityFlow;
 document.getElementById("qa-update-due").onclick = startUpdateDueFlow;
-document.getElementById("qa-export").onclick = async () => {
-  addMessage("気づきを Google Drive へ出力", "user");
-  const typing = addTyping();
-  try {
-    const res = await MobileAPI.exportInsights();
-    typing.remove();
-    addMessage(res.message || `${res.count || 0}件を出力したよ📤`, "bot");
-  } catch (e) {
-    typing.remove();
-    addMessage(e.message, "bot");
-  }
-};
 
 function updateHeaderOrg(org) {
   const el = document.getElementById("header-org-name");
