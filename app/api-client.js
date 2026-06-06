@@ -136,9 +136,16 @@ const MobileAPI = {
   suggestCategories(content) {
     return this.request("/api/suggest-categories", { method: "POST", body: JSON.stringify({ content }) });
   },
-  companies(q) {
-    const path = `/api/client-companies${q ? `?q=${encodeURIComponent(q)}` : ""}`;
-    return q ? this.request(path) : this.cachedRequest(path);
+  companies(filters) {
+    const f = typeof filters === "string" ? { q: filters } : (filters || {});
+    const params = new URLSearchParams();
+    ["q", "area", "salary", "job_type", "keyword"].forEach((key) => {
+      const v = String(f[key] || "").trim();
+      if (v) params.set(key, v);
+    });
+    const qs = params.toString();
+    const path = `/api/client-companies${qs ? `?${qs}` : ""}`;
+    return qs ? this.request(path) : this.cachedRequest(path);
   },
   company(id) { return this.request(`/api/client-companies?id=${id}`); },
   async createCompany(body) {

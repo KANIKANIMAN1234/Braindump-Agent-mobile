@@ -36,11 +36,27 @@ const MobilePanels = {
       this.panelHeader("採用企業", `
         <button type="button" class="panel-btn" id="btn-bulk-company">📋 一括</button>
         <button type="button" class="panel-btn" id="btn-add-company">＋ 追加</button>`) +
-      `<div class="panel-search"><input type="search" id="company-q" placeholder="企業名で検索" /></div>` +
+      `<div class="panel-search panel-search--company">
+        <input type="search" id="company-q" placeholder="企業名" />
+        <div class="panel-search-grid">
+          <input type="search" id="company-area" placeholder="採用エリア" />
+          <input type="search" id="company-salary" placeholder="募集年収幅" />
+          <input type="search" id="company-job-type" placeholder="職種" />
+          <input type="search" id="company-keyword" placeholder="キーワード" />
+        </div>
+      </div>` +
       `<div id="company-list" class="panel-list"></div>`;
 
-    const load = async (q) => {
-      const { companies } = await MobileAPI.companies(q);
+    const getCompanyFilters = () => ({
+      q: document.getElementById("company-q")?.value.trim() || "",
+      area: document.getElementById("company-area")?.value.trim() || "",
+      salary: document.getElementById("company-salary")?.value.trim() || "",
+      job_type: document.getElementById("company-job-type")?.value.trim() || "",
+      keyword: document.getElementById("company-keyword")?.value.trim() || "",
+    });
+
+    const load = async () => {
+      const { companies } = await MobileAPI.companies(getCompanyFilters());
       const list = document.getElementById("company-list");
       if (!companies.length) {
         list.innerHTML = `<div class="panel-empty">採用企業がありません</div>`;
@@ -58,8 +74,10 @@ const MobilePanels = {
 
     document.getElementById("btn-add-company").onclick = () => this.showCompanyForm(null, load);
     document.getElementById("btn-bulk-company").onclick = () => this.showCompanyBulkImport(load);
-    document.getElementById("company-q").addEventListener("input", (e) => load(e.target.value));
-    await load("");
+    ["company-q", "company-area", "company-salary", "company-job-type", "company-keyword"].forEach((id) => {
+      document.getElementById(id).addEventListener("input", () => load());
+    });
+    await load();
   },
 
   companyContactImportSection() {

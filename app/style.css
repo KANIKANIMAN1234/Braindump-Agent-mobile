@@ -1067,6 +1067,18 @@ body {
 
 .panel-search { margin-bottom: 0.75rem; }
 
+.panel-search--company {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.panel-search-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
 .panel-search input {
   width: 100%;
   padding: 8px 12px;

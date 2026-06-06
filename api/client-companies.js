@@ -2,6 +2,7 @@ const { getSupabaseAdmin } = require("../lib/supabase-admin");
 const { requireLineMember } = require("../lib/require-member");
 const { applyClientCompaniesScope } = require("../lib/data-scope");
 const { handleOptions } = require("../lib/cors");
+const { filterCompaniesByPostings, hasPostingFilters } = require("../lib/company-search");
 
 const COMPANY_FIELDS =
   "id, name, company_culture, internal_notes, hr_name, hr_phone, hr_email, dept_manager_name, dept_manager_phone, dept_manager_email, window_contact_name, window_contact_phone, window_contact_email, created_at, updated_at";
@@ -40,16 +41,36 @@ module.exports = async function handler(req, res) {
   }
 
   if (req.method === "GET" && !id) {
+    const filters = {
+      q: String(req.query.q || "").trim(),
+      area: String(req.query.area || "").trim(),
+      salary: String(req.query.salary || "").trim(),
+      job_type: String(req.query.job_type || "").trim(),
+      keyword: String(req.query.keyword || "").trim(),
+    };
+
     let query = supabase
       .from("m_client_companies")
       .select(COMPANY_FIELDS)
       .order("name", { ascending: true });
     query = applyClientCompaniesScope(query, ctx);
-    const q = req.query.q;
-    if (q) query = query.ilike("name", `%${q}%`);
+    if (filters.q) query = query.ilike("name", `%${filters.q}%`);
     const { data, error } = await query;
     if (error) return res.status(500).json({ error: error.message });
-    const enriched = await enrichWithPostingCounts(data || []);
+
+    let companies = data || [];
+    if (hasPostingFilters(filters) && companies.length) {
+      const orgId = ctx.member.organization_id;
+      const { data: postings, error: postingErr } = await supabase
+        .from("t_job_postings")
+        .select("client_company_id, title, job_posting")
+        .eq("organization_id", orgId)
+        .in("client_company_id", companies.map((c) => c.id));
+      if (postingErr) return res.status(500).json({ error: postingErr.message });
+      companies = filterCompaniesByPostings(companies, postings, filters);
+    }
+
+    const enriched = await enrichWithPostingCounts(companies);
     return res.status(200).json({ companies: enriched });
   }
 
