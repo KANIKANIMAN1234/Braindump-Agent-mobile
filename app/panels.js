@@ -1,4 +1,4 @@
-/** AgentDump Mobile — パネル画面（企業・転職者・気づき・設定） */
+/** AgentDump Mobile — パネル画面（企業・転職者・タスク・気づき） */
 const MobilePanels = {
   isOrgMember() {
     return MobileAPI.me && !MobileAPI.me.legacy;
@@ -15,7 +15,6 @@ const MobilePanels = {
       seekers: (container) => this.renderSeekers(container),
       tasks: (container) => this.renderTasks(container),
       insights: (container) => this.renderInsights(container),
-      settings: (container) => this.renderSettings(container),
     };
     const el = document.getElementById(`view-${view}`);
     if (!el || !map[view]) return;
@@ -983,34 +982,6 @@ const MobilePanels = {
     };
     await load();
   },
-
-  async renderSettings(el) {
-    if (!this.isOrgMember()) {
-      el.innerHTML = this.panelHeader("設定") + `<div class="panel-empty">法人メンバー登録後に利用できます</div>`;
-      return;
-    }
-    const { settings } = await MobileAPI.orgSettings();
-    const canEdit = MobileAPI.me?.member?.role === "org_admin";
-    el.innerHTML =
-      this.panelHeader("設定") +
-      `<div class="panel-card static">
-        <strong>Google Drive フォルダ ID</strong>
-        <p class="hint">サービスアカウントにフォルダを共有してください</p>
-        <input id="drive-folder" value="${escapeHtml(settings.google_drive_folder_id || "")}" ${canEdit ? "" : "disabled"} />
-        ${canEdit ? `<button type="button" class="panel-btn primary" id="save-drive" style="margin-top:12px">保存</button>` : `<p class="hint">org_admin のみ編集可</p>`}
-      </div>`;
-    if (canEdit) {
-      document.getElementById("save-drive").onclick = async () => {
-        try {
-          await MobileAPI.saveOrgSettings({
-            google_drive_folder_id: document.getElementById("drive-folder").value,
-            google_drive_enabled: true,
-          });
-          alert("保存しました");
-        } catch (e) { alert(e.message); }
-      };
-    }
-  },
 };
 
 /** タブ切り替え */
@@ -1029,7 +1000,7 @@ const MobileNav = {
       b.classList.toggle("active", b.dataset.view === view);
     });
     document.getElementById("view-chat").classList.toggle("hidden", view !== "chat");
-    ["companies", "seekers", "tasks", "insights", "settings"].forEach((v) => {
+    ["companies", "seekers", "tasks", "insights"].forEach((v) => {
       const el = document.getElementById(`view-${v}`);
       if (el) el.classList.toggle("hidden", view !== v);
     });
