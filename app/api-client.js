@@ -239,6 +239,9 @@ const MobileAPI = {
   exportInsights() { return this.request("/api/export-insights", { method: "POST", body: "{}" }); },
   orgSettings() { return this.request("/api/org/settings"); },
   saveOrgSettings(body) { return this.request("/api/org/settings", { method: "PATCH", body: JSON.stringify(body) }); },
+  memberPreferences() { return this.request("/api/member/preferences"); },
+  saveMemberPreferences(body) { return this.request("/api/member/preferences", { method: "PATCH", body: JSON.stringify(body) }); },
+  testLineNotification() { return this.request("/api/member/preferences", { method: "POST", body: JSON.stringify({}) }); },
   async transcribe(blob) {
     const base64 = await new Promise((res, rej) => {
       const r = new FileReader();
