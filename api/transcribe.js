@@ -1,16 +1,6 @@
 const { OpenAI, toFile } = require("openai");
-
-/* -------------------------------------------------------
- * LINE token 検証（アクセストークン → プロフィールAPI）
- * ----------------------------------------------------- */
-async function verifyLineToken(accessToken) {
-  const resp = await fetch("https://api.line.me/v2/profile", {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
-  if (!resp.ok) throw new Error("LINE token verification failed");
-  const data = await resp.json();
-  return data.userId;
-}
+const { requireLineMember } = require("../lib/require-member");
+const { handleOptions } = require("../lib/cors");
 
 function detectExtension(mimeType) {
   if (!mimeType) return "webm";
@@ -23,17 +13,11 @@ function detectExtension(mimeType) {
 }
 
 module.exports = async function handler(req, res) {
+  if (handleOptions(req, res)) return;
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
-  const authHeader = req.headers.authorization || "";
-  const accessToken = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null;
-  if (!accessToken) return res.status(401).json({ error: "認証が必要です（LINEからアクセスしてください）" });
-
-  try {
-    await verifyLineToken(accessToken);
-  } catch (e) {
-    return res.status(401).json({ error: `認証エラー: ${e.message}` });
-  }
+  const ctx = await requireLineMember(req, res);
+  if (!ctx) return;
 
   const { audioBase64, mimeType } = req.body || {};
   if (!audioBase64) return res.status(400).json({ error: "audioBase64 is required" });

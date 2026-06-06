@@ -1,7 +1,7 @@
 const { OpenAI } = require("openai");
 const { getSupabaseAdmin } = require("../lib/supabase-admin");
-const { extractBearerToken } = require("../lib/line-auth");
-const { resolveMemberContext } = require("../lib/member-context");
+const { requireLineMember } = require("../lib/require-member");
+const { handleOptions } = require("../lib/cors");
 const { executeTool, getWeekRange } = require("../lib/execute-tools");
 const { scopedRowData } = require("../lib/data-scope");
 
@@ -132,25 +132,16 @@ const tools = [
  * ハンドラー
  * ----------------------------------------------------- */
 module.exports = async function handler(req, res) {
+  if (handleOptions(req, res)) return;
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+
+  const ctx = await requireLineMember(req, res);
+  if (!ctx) return;
 
   const { message } = req.body || {};
   if (!message) return res.status(400).json({ error: "message is required" });
 
-  const idToken = extractBearerToken(req);
-  if (!idToken) return res.status(401).json({ error: "認証が必要です（LINEからアクセスしてください）" });
-
-  let ctx;
-  try {
-    const { verifyLineToken } = require("../lib/line-auth");
-    const lineProfile = await verifyLineToken(idToken);
-    ctx = await resolveMemberContext(lineProfile.userId);
-    ctx.lineProfile = lineProfile;
-  } catch (e) {
-    return res.status(401).json({ error: `認証エラー: ${e.message}` });
-  }
-
-  if (!ctx.legacy && ctx.needsOrgSetup && ctx.member.role === "org_admin") {
+  if (!ctx.legacy && ctx.needsOrgSetup && ctx.member?.role === "org_admin") {
     return res.status(403).json({
       error: "先に組織階層の設定を完了してください（⚙️管理メニュー）",
     });
