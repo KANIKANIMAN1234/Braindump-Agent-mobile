@@ -4,6 +4,36 @@ const MobilePanels = {
     return MobileAPI.me && !MobileAPI.me.legacy;
   },
 
+  markStale(prefixes) {
+    const map = {
+      "/api/client-companies": "companies",
+      "/api/job-seekers": "seekers",
+      "/api/tasks": "tasks",
+      "/api/insights": "insights",
+    };
+    (prefixes || []).forEach((p) => {
+      const view = map[p];
+      const el = view && document.getElementById(`view-${view}`);
+      if (el) el.dataset.stale = "1";
+    });
+  },
+
+  markAllStale() {
+    ["companies", "seekers", "tasks", "insights"].forEach((view) => {
+      const el = document.getElementById(`view-${view}`);
+      if (el) el.dataset.stale = "1";
+    });
+  },
+
+  prefetch() {
+    if (!this.isOrgMember()) return;
+    Promise.all([
+      MobileAPI.companies().catch(() => null),
+      MobileAPI.jobSeekers().catch(() => null),
+      MobileAPI.tasks().catch(() => null),
+    ]);
+  },
+
   panelHeader(title, actionHtml = "") {
     const actions = actionHtml ? `<div class="panel-header-actions">${actionHtml}</div>` : "";
     return `<div class="panel-header"><h2>${escapeHtml(title)}</h2>${actions}</div>`;
@@ -18,9 +48,12 @@ const MobilePanels = {
     };
     const el = document.getElementById(`view-${view}`);
     if (!el || !map[view]) return;
+    if (el.dataset.loaded === "1" && el.dataset.stale !== "1") return;
     el.innerHTML = `<div class="panel-loading">読み込み中...</div>`;
     try {
       await map[view](el);
+      el.dataset.loaded = "1";
+      el.dataset.stale = "0";
     } catch (e) {
       el.innerHTML = `<div class="panel-empty panel-error">${escapeHtml(e.message)}</div>`;
     }
@@ -73,8 +106,9 @@ const MobilePanels = {
 
     document.getElementById("btn-add-company").onclick = () => this.showCompanyForm(null, load);
     document.getElementById("btn-bulk-company").onclick = () => this.showCompanyBulkImport(load);
+    const debouncedLoad = debounce(load, 300);
     ["company-q", "company-area", "company-salary", "company-job-type", "company-keyword"].forEach((id) => {
-      document.getElementById(id).addEventListener("input", () => load());
+      document.getElementById(id).addEventListener("input", debounceLoad);
     });
     await load();
   },
@@ -666,7 +700,7 @@ const MobilePanels = {
     };
 
     document.getElementById("btn-add-seeker").onclick = () => this.showSeekerForm(null, load);
-    document.getElementById("seeker-q").addEventListener("input", (e) => load(e.target.value));
+    document.getElementById("seeker-q").addEventListener("input", debounce((e) => load(e.target.value), 300));
     await load("");
   },
 
@@ -830,10 +864,12 @@ const MobilePanels = {
 
     let companies = [];
     let seekers = [];
-    if (this.isOrgMember()) {
-      try { companies = (await MobileAPI.companies()).companies || []; } catch (_) {}
-    }
-    try { seekers = (await MobileAPI.jobSeekers()).jobSeekers || []; } catch (_) {}
+    const [companiesRes, seekersRes] = await Promise.all([
+      this.isOrgMember() ? MobileAPI.companies().catch(() => ({ companies: [] })) : Promise.resolve({ companies: [] }),
+      MobileAPI.jobSeekers().catch(() => ({ jobSeekers: [] })),
+    ]);
+    companies = companiesRes.companies || [];
+    seekers = seekersRes.jobSeekers || [];
 
     const load = async () => {
       const { tasks } = await MobileAPI.tasks();
@@ -995,6 +1031,7 @@ const MobileNav = {
   },
 
   switch(view) {
+    if (view === this.current && view !== "chat") return;
     this.current = view;
     document.querySelectorAll(".bottom-nav-item").forEach((b) => {
       b.classList.toggle("active", b.dataset.view === view);

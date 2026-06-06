@@ -5,9 +5,11 @@ const MobileAPI = {
   sessionToken: null,
   me: null,
   _cache: new Map(),
+  _inflight: new Map(),
   _cacheTtl: 60000,
 
   setSessionToken(token) {
+    if (token === this.sessionToken) return;
     this.sessionToken = token;
     if (token) sessionStorage.setItem("agentdump_session", token);
     else sessionStorage.removeItem("agentdump_session");
@@ -40,6 +42,22 @@ const MobileAPI = {
 
   invalidateList() {
     this._cache.clear();
+    this._inflight.clear();
+    if (typeof MobilePanels !== "undefined") MobilePanels.markAllStale();
+  },
+
+  invalidatePaths(prefixes) {
+    if (!prefixes?.length) {
+      this.invalidateList();
+      return;
+    }
+    for (const key of [...this._cache.keys()]) {
+      if (prefixes.some((p) => key.startsWith(p))) this._cache.delete(key);
+    }
+    for (const key of [...this._inflight.keys()]) {
+      if (prefixes.some((p) => key.startsWith(p))) this._inflight.delete(key);
+    }
+    if (typeof MobilePanels !== "undefined") MobilePanels.markStale(prefixes);
   },
 
   _getCache(path) {
@@ -59,9 +77,18 @@ const MobileAPI = {
   async cachedRequest(path, options = {}) {
     const cached = this._getCache(path);
     if (cached) return cached;
-    const data = await this.request(path, options);
-    this._setCache(path, data);
-    return data;
+    if (this._inflight.has(path)) return this._inflight.get(path);
+
+    const promise = this.request(path, options).then((data) => {
+      this._setCache(path, data);
+      this._inflight.delete(path);
+      return data;
+    }).catch((err) => {
+      this._inflight.delete(path);
+      throw err;
+    });
+    this._inflight.set(path, promise);
+    return promise;
   },
 
   async request(path, options = {}) {
@@ -80,24 +107,40 @@ const MobileAPI = {
   },
 
   async loadConfig() {
+    const cached = sessionStorage.getItem("agentdump_liff_id");
+    if (cached) {
+      this.LIFF_ID = cached;
+      return { liffId: cached };
+    }
     const cfg = await fetch("/api/config").then((r) => r.json());
     this.LIFF_ID = cfg.liffId || new URLSearchParams(location.search).get("liffId") || "";
+    if (this.LIFF_ID) sessionStorage.setItem("agentdump_liff_id", this.LIFF_ID);
     return cfg;
   },
 
-  authMe() { return this.request("/api/auth/me", { useLineToken: true }); },
+  async authMe() {
+    if (this.sessionToken) {
+      try {
+        return await this.request("/api/auth/me");
+      } catch (_) {
+        sessionStorage.removeItem("agentdump_session");
+        this.sessionToken = null;
+      }
+    }
+    return this.request("/api/auth/me", { useLineToken: true });
+  },
   async activateInvite(code) {
     const data = await this.request("/api/auth/activate", {
       method: "POST",
       body: JSON.stringify({ invite: code }),
       useLineToken: true,
     });
-    this.invalidateList();
+    this.invalidatePaths(["/api/auth/me", "/api/dashboard", "/api/tasks"]);
     return data;
   },
   async orgSetup(body) {
     const data = await this.request("/api/org/setup", { method: "POST", body: JSON.stringify(body) });
-    this.invalidateList();
+    this.invalidatePaths(["/api/org", "/api/dashboard"]);
     return data;
   },
   orgTree() { return this.request("/api/org/tree"); },
@@ -115,22 +158,22 @@ const MobileAPI = {
       method: "PATCH",
       body: JSON.stringify({ id, action: "complete", result: result || null }),
     });
-    this.invalidateList();
+    this.invalidatePaths(["/api/tasks"]);
     return data;
   },
   async updateTask(body) {
     const data = await this.request("/api/tasks", { method: "PATCH", body: JSON.stringify(body) });
-    this.invalidateList();
+    this.invalidatePaths(["/api/tasks"]);
     return data;
   },
   async deleteTask(id) {
     const data = await this.request(`/api/tasks?id=${id}`, { method: "DELETE" });
-    this.invalidateList();
+    this.invalidatePaths(["/api/tasks"]);
     return data;
   },
   async createTask(body) {
     const data = await this.request("/api/tasks", { method: "POST", body: JSON.stringify(body) });
-    this.invalidateList();
+    this.invalidatePaths(["/api/tasks"]);
     return data;
   },
   suggestCategories(content) {
@@ -150,7 +193,7 @@ const MobileAPI = {
   company(id) { return this.request(`/api/client-companies?id=${id}`); },
   async createCompany(body) {
     const data = await this.request("/api/client-companies", { method: "POST", body: JSON.stringify(body) });
-    this.invalidateList();
+    this.invalidatePaths(["/api/client-companies"]);
     return data;
   },
   parseCompanyText(content) { return this.request("/api/parse-company", { method: "POST", body: JSON.stringify({ content }) }); },
@@ -160,27 +203,27 @@ const MobileAPI = {
   jobPosting(id) { return this.request(`/api/job-postings?id=${id}`); },
   async createJobPosting(body) {
     const data = await this.request("/api/job-postings", { method: "POST", body: JSON.stringify(body) });
-    this.invalidateList();
+    this.invalidatePaths(["/api/job-postings", "/api/client-companies"]);
     return data;
   },
   async updateJobPosting(id, body) {
     const data = await this.request(`/api/job-postings?id=${id}`, { method: "PATCH", body: JSON.stringify(body) });
-    this.invalidateList();
+    this.invalidatePaths(["/api/job-postings", "/api/client-companies"]);
     return data;
   },
   async deleteJobPosting(id) {
     const data = await this.request(`/api/job-postings?id=${id}`, { method: "DELETE" });
-    this.invalidateList();
+    this.invalidatePaths(["/api/job-postings", "/api/client-companies"]);
     return data;
   },
   async updateCompany(id, body) {
     const data = await this.request(`/api/client-companies?id=${id}`, { method: "PATCH", body: JSON.stringify(body) });
-    this.invalidateList();
+    this.invalidatePaths(["/api/client-companies"]);
     return data;
   },
   async deleteCompany(id) {
     const data = await this.request(`/api/client-companies?id=${id}`, { method: "DELETE" });
-    this.invalidateList();
+    this.invalidatePaths(["/api/client-companies"]);
     return data;
   },
   memos(companyId) { return this.request(`/api/company-memos?companyId=${companyId}`); },
@@ -196,17 +239,17 @@ const MobileAPI = {
   jobSeeker(id) { return this.request(`/api/job-seekers?id=${id}`); },
   async createJobSeeker(body) {
     const data = await this.request("/api/job-seekers", { method: "POST", body: JSON.stringify(body) });
-    this.invalidateList();
+    this.invalidatePaths(["/api/job-seekers"]);
     return data;
   },
   async updateJobSeeker(id, body) {
     const data = await this.request(`/api/job-seekers?id=${id}`, { method: "PATCH", body: JSON.stringify(body) });
-    this.invalidateList();
+    this.invalidatePaths(["/api/job-seekers"]);
     return data;
   },
   async deleteJobSeeker(id) {
     const data = await this.request(`/api/job-seekers?id=${id}`, { method: "DELETE" });
-    this.invalidateList();
+    this.invalidatePaths(["/api/job-seekers"]);
     return data;
   },
   uploadPdf(jobSeekerId, type, file) {
@@ -233,7 +276,7 @@ const MobileAPI = {
   insights() { return this.cachedRequest("/api/insights"); },
   async createInsight(body) {
     const data = await this.request("/api/insights", { method: "POST", body: JSON.stringify(body) });
-    this.invalidateList();
+    this.invalidatePaths(["/api/insights"]);
     return data;
   },
   exportInsights() { return this.request("/api/export-insights", { method: "POST", body: "{}" }); },
@@ -258,6 +301,14 @@ const MobileAPI = {
 };
 
 MobileAPI.restoreSession();
+
+function debounce(fn, ms = 300) {
+  let timer;
+  return (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), ms);
+  };
+}
 
 function escapeHtml(s) {
   return String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");

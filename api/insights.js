@@ -12,6 +12,14 @@ module.exports = async function handler(req, res) {
   const supabase = getSupabaseAdmin();
 
   if (req.method === "GET") {
+    if (req.query.count === "1") {
+      let query = supabase.from("t_insights").select("id", { count: "exact", head: true });
+      query = applyInsightsScope(query, ctx);
+      const { count, error } = await query;
+      if (error) return res.status(500).json({ error: error.message });
+      return res.status(200).json({ count: count || 0 });
+    }
+
     const limit = Math.min(parseInt(req.query.limit, 10) || 50, 100);
     let query = supabase
       .from("t_insights")

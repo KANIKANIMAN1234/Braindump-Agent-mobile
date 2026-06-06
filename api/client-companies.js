@@ -7,6 +7,8 @@ const { filterCompaniesByPostings, hasPostingFilters } = require("../lib/company
 const COMPANY_FIELDS =
   "id, name, company_culture, internal_notes, hr_name, hr_phone, hr_email, dept_manager_name, dept_manager_phone, dept_manager_email, window_contact_name, window_contact_phone, window_contact_email, created_at, updated_at";
 
+const COMPANY_LIST_LIGHT = "id, name, created_at, updated_at";
+
 module.exports = async function handler(req, res) {
   if (handleOptions(req, res)) return;
 
@@ -51,7 +53,7 @@ module.exports = async function handler(req, res) {
 
     let query = supabase
       .from("m_client_companies")
-      .select(COMPANY_FIELDS)
+      .select(COMPANY_LIST_LIGHT)
       .order("name", { ascending: true });
     query = applyClientCompaniesScope(query, ctx);
     if (filters.q) query = query.ilike("name", `%${filters.q}%`);

@@ -47,7 +47,7 @@ function scrollBottom() {
   el.scrollTop = el.scrollHeight;
 }
 
-function addMessage(text, role, createdAt = null) {
+function createMessageElement(text, role, createdAt = null) {
   const wrap = document.createElement("div");
   wrap.className = `msg ${role}`;
   if (role === "bot") {
@@ -64,7 +64,11 @@ function addMessage(text, role, createdAt = null) {
   time.textContent = formatMsgTime(createdAt);
   if (role === "user") { wrap.appendChild(time); wrap.appendChild(bubble); }
   else { wrap.appendChild(bubble); wrap.appendChild(time); }
-  chatBody().appendChild(wrap);
+  return wrap;
+}
+
+function addMessage(text, role, createdAt = null) {
+  chatBody().appendChild(createMessageElement(text, role, createdAt));
   scrollBottom();
 }
 
@@ -496,6 +500,7 @@ async function loadHistory() {
       addMessage("AgentDumpへようこそ！💬\nタスク・企業・転職者を管理できます", "bot");
       return;
     }
+    const frag = document.createDocumentFragment();
     let lastDate = "";
     msgs.forEach((m) => {
       const d = formatMsgDate(m.created_at);
@@ -503,11 +508,13 @@ async function loadHistory() {
         const sep = document.createElement("div");
         sep.className = "history-separator";
         sep.textContent = d;
-        chatBody().appendChild(sep);
+        frag.appendChild(sep);
         lastDate = d;
       }
-      addMessage(m.content, m.role === "user" ? "user" : "bot", m.created_at);
+      frag.appendChild(createMessageElement(m.content, m.role === "user" ? "user" : "bot", m.created_at));
     });
+    chatBody().appendChild(frag);
+    scrollBottom();
   } catch {
     addMessage("AgentDumpへようこそ！", "bot");
   }
@@ -526,14 +533,6 @@ async function bootstrap() {
     MobileAPI.setLineToken(liff.getAccessToken());
     MobileAPI.restoreSession();
 
-    const profile = await liff.getProfile();
-    document.getElementById("header-user-name").textContent = profile.displayName;
-    if (profile.pictureUrl) {
-      const img = document.getElementById("header-user-icon");
-      img.src = profile.pictureUrl;
-      img.style.display = "block";
-    }
-
     const invite = new URLSearchParams(location.search).get("invite");
     if (invite) {
       try {
@@ -547,6 +546,15 @@ async function bootstrap() {
 
     MobileAPI.me = await MobileAPI.authMe();
     if (MobileAPI.me.sessionToken) MobileAPI.setSessionToken(MobileAPI.me.sessionToken);
+
+    const profile = MobileAPI.me.lineProfile || {};
+    document.getElementById("header-user-name").textContent = profile.displayName || "ユーザー";
+    if (profile.pictureUrl) {
+      const img = document.getElementById("header-user-icon");
+      img.src = profile.pictureUrl;
+      img.style.display = "block";
+    }
+
     if (!MobileAPI.me.legacy) {
       currentMember = MobileAPI.me.member;
       currentOrganization = MobileAPI.me.organization;
@@ -557,7 +565,8 @@ async function bootstrap() {
     document.getElementById("loading-overlay").classList.add("hidden");
     document.getElementById("app-shell").classList.remove("hidden");
     MobileNav.init();
-    await loadHistory();
+    loadHistory();
+    MobilePanels.prefetch();
   } catch (e) {
     document.getElementById("loading-overlay").innerHTML = `<p style="color:#fff;padding:1rem;text-align:center">${escapeHtml(e.message)}</p>`;
   }

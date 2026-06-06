@@ -13,6 +13,6 @@ module.exports = function handler(req, res) {
     });
   }
 
-  res.setHeader("Cache-Control", "no-store");
-  res.status(200).json({ supabaseUrl, supabaseAnonKey, liffId, appName: "AgentDump" });
+  res.setHeader("Cache-Control", "public, max-age=3600");
+  res.status(200).json({ liffId, appName: "AgentDump" });
 };
