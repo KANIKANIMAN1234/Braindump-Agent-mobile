@@ -16,6 +16,9 @@
   --font-jp: "Noto Sans JP", Meiryo, "Hiragino Kaku Gothic Pro", sans-serif;
   --font-en: "Arial Black", arial, sans-serif;
   --radius: 0;
+  --line-bot-bubble: #ffffff;
+  --line-user-bubble: #a8e070;
+  --line-bubble-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
 }
 
 * {
@@ -186,7 +189,14 @@ body {
 .msg.bot { align-self: flex-start; }
 
 .msg-avatar {
-  font-size: 1.25rem;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--surface-blue);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
   flex-shrink: 0;
   margin-bottom: 0.1rem;
 }
@@ -194,25 +204,51 @@ body {
 .msg.user .msg-avatar { display: none; }
 
 .msg-bubble {
-  padding: 0.6rem 0.85rem;
-  border-radius: var(--radius);
-  font-size: 12px;
-  line-height: 1.6;
+  position: relative;
+  padding: 0.65rem 0.9rem;
+  border-radius: 18px;
+  font-size: 13px;
+  line-height: 1.55;
   word-break: break-word;
   white-space: pre-wrap;
-  box-shadow: none;
+  border: none;
+  box-shadow: var(--line-bubble-shadow);
 }
 
-.msg.bot .msg-bubble {
-  background: var(--white);
-  border: 1px solid var(--border);
+.msg.bot > .msg-bubble,
+.msg.bot .msg-bubble-group > .msg-bubble:first-child {
+  background: var(--line-bot-bubble);
   color: var(--text-dark);
+}
+
+.msg.bot > .msg-bubble::before,
+.msg.bot .msg-bubble-group > .msg-bubble:first-child::before {
+  content: "";
+  position: absolute;
+  left: -6px;
+  bottom: 8px;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 6px 8px 6px 0;
+  border-color: transparent var(--line-bot-bubble) transparent transparent;
 }
 
 .msg.user .msg-bubble {
-  background: var(--surface-blue);
-  border: 1px solid var(--border);
+  background: var(--line-user-bubble);
   color: var(--text-dark);
+}
+
+.msg.user .msg-bubble::before {
+  content: "";
+  position: absolute;
+  right: -6px;
+  bottom: 8px;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 6px 0 6px 8px;
+  border-color: transparent transparent transparent var(--line-user-bubble);
 }
 
 .msg-time {
@@ -281,27 +317,30 @@ body {
 .msg-bubble-group {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.45rem;
   max-width: 100%;
+  min-width: 0;
 }
 
 .choice-buttons {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
+  gap: 0.45rem;
+  padding-left: 2px;
 }
 
 .choice-btn {
-  padding: 6px 12px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--white);
+  padding: 7px 14px;
+  border: 1px solid #d8d8d8;
+  border-radius: 999px;
+  background: var(--line-bot-bubble);
   font-size: 12px;
   font-family: var(--font-jp);
   font-weight: 400;
   cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
   color: var(--text-dark);
+  box-shadow: var(--line-bubble-shadow);
 }
 
 .choice-btn:hover:not(:disabled) {
@@ -326,9 +365,9 @@ body {
 
 .choice-submit-btn {
   align-self: flex-start;
-  padding: 8px 16px;
+  padding: 8px 18px;
   border: none;
-  border-radius: var(--radius);
+  border-radius: 999px;
   background: var(--dulton-navy);
   color: var(--white);
   font-family: var(--font-jp);
@@ -336,6 +375,7 @@ body {
   font-weight: 400;
   cursor: pointer;
   transition: opacity 0.15s;
+  box-shadow: var(--line-bubble-shadow);
 }
 
 .choice-submit-btn:hover:not(:disabled) { opacity: 0.88; }
@@ -493,12 +533,12 @@ body {
 }
 
 .task-list-bubble {
-  background: var(--white);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 0.75rem;
-  margin-top: 0.3rem;
-  box-shadow: none;
+  background: var(--line-bot-bubble);
+  border: none;
+  border-radius: 18px;
+  padding: 0.75rem 0.9rem;
+  margin-top: 0;
+  box-shadow: var(--line-bubble-shadow);
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
