@@ -10,8 +10,7 @@
   let currentSetupOrgName = "";
 
   function authHeader() {
-    const token = typeof liff !== "undefined" ? liff.getAccessToken() : null;
-    return token ? { Authorization: `Bearer ${token}` } : {};
+    return MobileAPI.authHeader();
   }
 
   async function orgApi(path, options = {}) {
@@ -367,7 +366,10 @@
       const payload = collectSetupPayload();
       payload.agreed_terms = true;
       await orgApi("/api/org/setup", { method: "POST", body: JSON.stringify(payload) });
-      const savedDepth = orgState.depth;
+      const me = await MobileAPI.authMe();
+      MobileAPI.me = me;
+      if (me.sessionToken) MobileAPI.setSessionToken(me.sessionToken);
+      const savedDepth = me.organization?.org_structure_depth ?? orgState.depth;
       hideOverlay();
       window.dispatchEvent(
         new CustomEvent("org-setup-complete", { detail: { depth: savedDepth } })

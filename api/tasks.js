@@ -2,9 +2,7 @@ const { getSupabaseAdmin } = require("../lib/supabase-admin");
 const { requireLineMember } = require("../lib/require-member");
 const { applyTasksScope, scopedRowData } = require("../lib/data-scope");
 const { handleOptions } = require("../lib/cors");
-
-const TASK_SELECT =
-  "id, title, due_date, priority, completed, result, client_company_id, job_posting_id, job_seeker_id, member_id, created_at";
+const { enrichTasks, TASK_SELECT } = require("../lib/task-enrich");
 
 module.exports = async function handler(req, res) {
   if (handleOptions(req, res)) return;
@@ -20,42 +18,8 @@ module.exports = async function handler(req, res) {
 
   const supabase = getSupabaseAdmin();
 
-  async function enrichTasks(tasks) {
-    if (!tasks?.length) return [];
-    const companyIds = [...new Set(tasks.map((t) => t.client_company_id).filter(Boolean))];
-    const postingIds = [...new Set(tasks.map((t) => t.job_posting_id).filter(Boolean))];
-    const seekerIds = [...new Set(tasks.map((t) => t.job_seeker_id).filter(Boolean))];
-    let companyMap = {};
-    let postingMap = {};
-    let seekerMap = {};
-    if (companyIds.length) {
-      const { data } = await supabase.from("m_client_companies").select("id, name").in("id", companyIds);
-      (data || []).forEach((c) => { companyMap[c.id] = c.name; });
-    }
-    if (postingIds.length) {
-      const { data } = await supabase.from("t_job_postings").select("id, title, client_company_id").in("id", postingIds);
-      (data || []).forEach((p) => {
-        postingMap[p.id] = { title: p.title, companyId: p.client_company_id };
-      });
-    }
-    if (seekerIds.length) {
-      const { data } = await supabase.from("m_job_seekers").select("id, name").in("id", seekerIds);
-      (data || []).forEach((s) => { seekerMap[s.id] = s.name; });
-    }
-    return tasks.map((t) => {
-      const posting = t.job_posting_id ? postingMap[t.job_posting_id] : null;
-      const companyName = t.client_company_id
-        ? companyMap[t.client_company_id] || "—"
-        : posting
-          ? companyMap[posting.companyId] || "—"
-          : null;
-      return {
-        ...t,
-        company_name: companyName,
-        posting_title: posting?.title || null,
-        job_seeker_name: t.job_seeker_id ? seekerMap[t.job_seeker_id] || "—" : null,
-      };
-    });
+  async function enrichTasksLocal(tasks) {
+    return enrichTasks(supabase, tasks);
   }
 
   if (req.method === "GET") {
@@ -77,7 +41,7 @@ module.exports = async function handler(req, res) {
 
     const { data, error } = await query;
     if (error) return res.status(500).json({ error: error.message });
-    const tasks = await enrichTasks(data || []);
+    const tasks = await enrichTasksLocal(data || []);
     return res.status(200).json({ tasks });
   }
 
@@ -104,7 +68,7 @@ module.exports = async function handler(req, res) {
     }
     const { data, error } = await supabase.from("t_tasks").insert(row).select(TASK_SELECT).single();
     if (error) return res.status(500).json({ error: error.message });
-    const [enriched] = await enrichTasks([data]);
+    const [enriched] = await enrichTasksLocal([data]);
     return res.status(201).json({ task: enriched });
   }
 
@@ -158,7 +122,7 @@ module.exports = async function handler(req, res) {
       .select(TASK_SELECT)
       .single();
     if (updateError) return res.status(500).json({ error: updateError.message });
-    const [enriched] = await enrichTasks([data]);
+    const [enriched] = await enrichTasksLocal([data]);
     return res.status(200).json({ task: enriched });
   }
 

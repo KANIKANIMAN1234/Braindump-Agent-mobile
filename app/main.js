@@ -521,6 +521,9 @@ async function bootstrap() {
       return;
     }
 
+    MobileAPI.setLineToken(liff.getAccessToken());
+    MobileAPI.restoreSession();
+
     const profile = await liff.getProfile();
     document.getElementById("header-user-name").textContent = profile.displayName;
     if (profile.pictureUrl) {
@@ -541,6 +544,7 @@ async function bootstrap() {
     }
 
     MobileAPI.me = await MobileAPI.authMe();
+    if (MobileAPI.me.sessionToken) MobileAPI.setSessionToken(MobileAPI.me.sessionToken);
     if (!MobileAPI.me.legacy) {
       currentMember = MobileAPI.me.member;
       currentOrganization = MobileAPI.me.organization;
