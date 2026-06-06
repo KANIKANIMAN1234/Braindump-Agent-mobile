@@ -10,10 +10,6 @@ module.exports = async function handler(req, res) {
   const ctx = await requireLineMember(req, res);
   if (!ctx) return;
 
-  if (!ctx.legacy && ctx.needsOrgSetup && ctx.member?.role === "org_admin") {
-    return res.status(403).json({ error: "先に組織階層の設定を完了してください" });
-  }
-
   try {
     const supabase = getSupabaseAdmin();
     const data = await fetchDashboardData(supabase, ctx);
